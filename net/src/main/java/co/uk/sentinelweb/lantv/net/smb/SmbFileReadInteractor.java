@@ -19,7 +19,8 @@ public class SmbFileReadInteractor {
             System.out.println("Samba: " + "testing url: " + url);
             file = new SmbFile(url);
 
-            return file.getInputStream();
+            final InputStream inputStream = file.getInputStream();
+            return inputStream;
         } catch (final MalformedURLException e) {
             System.out.println("Samba: badurl" + url);
             e.printStackTrace();
