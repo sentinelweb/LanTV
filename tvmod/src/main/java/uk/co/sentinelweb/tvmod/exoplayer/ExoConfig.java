@@ -12,6 +12,9 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 
+import uk.co.sentinelweb.tvmod.exoplayer.upstream.NetworkDataSourceFactory;
+import uk.co.sentinelweb.tvmod.exoplayer.upstream.SmbDataSourceFactory;
+
 /**
  * Created by robert on 15/02/2017.
  */
@@ -19,20 +22,50 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 public class ExoConfig {
 
     private boolean useExtensionRenderers;
-    private final Context c;
+    private final Context context;
 
-    public ExoConfig(final Context c, final boolean useExtensionRenderers) {
-        this.c = c;
+    /**
+     *
+     * @param context
+     * @param useExtensionRenderers
+     */
+    public ExoConfig(final Context context, final boolean useExtensionRenderers) {
+        this.context = context;
     }
 
+    /**
+     *
+     * @param bandwidthMeter bw
+     * @return
+     */
     public DataSource.Factory buildDataSourceFactory(final DefaultBandwidthMeter bandwidthMeter) {
-        return new DefaultDataSourceFactory(c, bandwidthMeter, buildHttpDataSourceFactory(bandwidthMeter));
+        return new DefaultDataSourceFactory(context, bandwidthMeter, buildNetworkDataSourceFactory(bandwidthMeter));
     }
 
+    /**
+     * Builds a {@link com.google.android.exoplayer2.upstream.HttpDataSource.Factory} only
+     * @param bandwidthMeter
+     * @return
+     */
     public HttpDataSource.Factory buildHttpDataSourceFactory(final DefaultBandwidthMeter bandwidthMeter) {
-        return new DefaultHttpDataSourceFactory(getUserAgent(c, "LanTv"), bandwidthMeter);
+        return new DefaultHttpDataSourceFactory(getUserAgent(context, "LanTv"), bandwidthMeter);
+    }
+    /**
+     * Builds a {@link uk.co.sentinelweb.tvmod.exoplayer.upstream.NetworkDataSourceFactory}
+     * remove the bandwidth meter as it not really need i think
+     *
+     * @return
+     */
+    public NetworkDataSourceFactory buildNetworkDataSourceFactory(final DefaultBandwidthMeter bandwidthMeter) {
+        final DefaultHttpDataSourceFactory httpDataSourceFactory = new DefaultHttpDataSourceFactory(getUserAgent(context, "LanTv"), bandwidthMeter);
+        final SmbDataSourceFactory smbDataSourceFactory = new SmbDataSourceFactory();
+        return new NetworkDataSourceFactory(httpDataSourceFactory, smbDataSourceFactory);
     }
 
+    /**
+     *
+     * @return
+     */
     public boolean useExtensionRenderers() {
         return useExtensionRenderers;
     }

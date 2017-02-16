@@ -32,7 +32,7 @@ import jcifs.smb.SmbFile;
 /**
  * A {@link DataSource} for reading local files.
  */
-public final class SmbFileDataSource implements DataSource {
+public final class SmbDataSource implements DataSource {
 
     /**
      * Thrown when IOException is encountered during local file read operation.
@@ -45,7 +45,7 @@ public final class SmbFileDataSource implements DataSource {
 
     }
     //private final AssetManager assetManager;
-    private final TransferListener<? super SmbFileDataSource> listener;
+    private final TransferListener<? super SmbDataSource> listener;
     SmbFile file;
     private Uri uri;
     private InputStream inputStream;
@@ -55,7 +55,7 @@ public final class SmbFileDataSource implements DataSource {
     /**
      * @param listener An optional listener.
      */
-    public SmbFileDataSource(final TransferListener<? super SmbFileDataSource> listener) {
+    public SmbDataSource(final TransferListener<? super SmbDataSource> listener) {
         this.listener = listener;
     }
 
