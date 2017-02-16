@@ -11,11 +11,13 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package uk.co.sentinelweb.tvmod;
+package uk.co.sentinelweb.tvmod.error;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+
+import uk.co.sentinelweb.tvmod.R;
 
 /*
  * This class demonstrates how to extend ErrorFragment
@@ -25,7 +27,7 @@ public class ErrorFragment extends android.support.v17.leanback.app.ErrorFragmen
     private static final boolean TRANSLUCENT = true;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setTitle(getResources().getString(R.string.app_name));
@@ -39,7 +41,7 @@ public class ErrorFragment extends android.support.v17.leanback.app.ErrorFragmen
         setButtonText(getResources().getString(R.string.dismiss_error));
         setButtonClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View arg0) {
+            public void onClick(final View arg0) {
                 getFragmentManager().beginTransaction().remove(ErrorFragment.this).commit();
             }
         });

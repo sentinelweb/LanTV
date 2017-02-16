@@ -12,7 +12,7 @@
  * the License.
  */
 
-package uk.co.sentinelweb.tvmod;
+package uk.co.sentinelweb.tvmod.util;
 
 import android.content.Context;
 import android.graphics.Point;

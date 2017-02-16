@@ -11,7 +11,7 @@ import jcifs.smb.SmbFile;
 import rx.Observable;
 import rx.functions.Func0;
 
-public class ShareListInteractor {
+public class SmbShareListInteractor {
 
     public Observable<List<Media>> getListObservable(final String ipAddr, final String shareName, final String dirname, final String username, final String password) {
         return Observable.defer(new Func0<Observable<List<Media>>>() {
@@ -31,6 +31,7 @@ public class ShareListInteractor {
         final String url = "smb://" + ipAddr + "/" +
                 shareName + "/" +
                 dirname + (!dirname.endsWith("/") ? "/" : "");
+        final List<Media> list = new ArrayList<>();
         try {
 
 
@@ -46,7 +47,6 @@ public class ShareListInteractor {
             }
             final long t2 = System.currentTimeMillis() - t1;
 
-            final List<Media> list = new ArrayList<>();
             for (int i = 0; i < files.length; i++) {
                 //System.out.println("Samba: " + files[i].getName());
                 try {
@@ -61,7 +61,6 @@ public class ShareListInteractor {
                 }
             }
             System.out.println("Samba: " + files.length + " files in " + t2 + "ms");
-            return list;
 
         } catch (final MalformedURLException e) {
             System.out.println("Samba: badurl" + url);
@@ -70,7 +69,7 @@ public class ShareListInteractor {
             System.out.println("Samba: exception" + e.getMessage());
             e.printStackTrace();
         }
-        return null;
+        return list;
     }
 
 

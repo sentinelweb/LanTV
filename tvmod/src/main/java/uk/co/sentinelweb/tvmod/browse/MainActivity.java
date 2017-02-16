@@ -12,25 +12,36 @@
  * the License.
  */
 
-package uk.co.sentinelweb.tvmod;
+package uk.co.sentinelweb.tvmod.browse;
 
 import android.app.Activity;
 import android.os.Bundle;
 
+import java.io.File;
+
+import uk.co.sentinelweb.tvmod.R;
+import uk.co.sentinelweb.tvmod.util.FileUtils;
+
 /*
- * Details activity class that loads LeanbackDetailsFragment class
+ * MainActivity class that loads MainFragment
  */
-public class DetailsActivity extends Activity {
-    public static final String SHARED_ELEMENT_NAME = "hero";
-    public static final String MOVIE = "Movie";
+public class MainActivity extends Activity {
+
+    public static final String TEST_MOVIE = "ETRG.mp4";
+    public static final String SAMPLE_MOVIE = "sample.avi";
+    public static File TEST_MOVIE_FILE = null;
 
     /**
      * Called when the activity is first created.
      */
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_details);
+        setContentView(R.layout.activity_main);
+//        TEST_MOVIE_FILE = new File(getFilesDir(), SAMPLE_MOVIE);
+//        FileUtils.copyFileFromAsset(this, SAMPLE_MOVIE, TEST_MOVIE_FILE);
     }
+
 
 }

@@ -9,7 +9,7 @@ import jcifs.smb.SmbFile;
  * Created by robert on 12/02/2017.
  */
 
-public class FileReadInteractor {
+public class SmbFileReadInteractor {
     public InputStream openFile(final String url, final String username, final String password) {
         jcifs.Config.setProperty("jcifs.smb.client.username", username);
         jcifs.Config.setProperty("jcifs.smb.client.password", password);

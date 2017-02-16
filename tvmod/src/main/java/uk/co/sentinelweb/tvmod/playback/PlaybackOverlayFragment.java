@@ -12,7 +12,7 @@
  * the License.
  */
 
-package uk.co.sentinelweb.tvmod;
+package uk.co.sentinelweb.tvmod.playback;
 
 import android.app.Activity;
 import android.media.MediaMetadataRetriever;
@@ -59,6 +59,11 @@ import java.util.List;
 import rx.Observer;
 import rx.Subscription;
 import rx.schedulers.Schedulers;
+import uk.co.sentinelweb.tvmod.Movie;
+import uk.co.sentinelweb.tvmod.MovieList;
+import uk.co.sentinelweb.tvmod.R;
+import uk.co.sentinelweb.tvmod.browse.CardPresenter;
+import uk.co.sentinelweb.tvmod.details.DetailsActivity;
 
 /*
  * Class for video playback with media control
@@ -107,7 +112,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         mSelectedMovie = (Movie) getActivity()
                 .getIntent().getSerializableExtra(DetailsActivity.MOVIE);
 
-        _subscribe = MovieList.setupMovies()
+        _subscribe = MovieList.setupMovies(getActivity())
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Observer<List<Movie>>() {
                     @Override

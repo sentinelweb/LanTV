@@ -32,5 +32,7 @@ dependencies {
     compile "io.reactivex:rxjava:$rxjava_version"
     // https://github.com/ReactiveX/RxAndroid
     compile 'io.reactivex:rxandroid:1.2.0'
+    //https://github.com/google/ExoPlayer
+    compile 'com.google.android.exoplayer:exoplayer:r2.2.0'
 
 }

@@ -12,7 +12,7 @@
  * the License.
  */
 
-package uk.co.sentinelweb.tvmod;
+package uk.co.sentinelweb.tvmod.details;
 
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -49,6 +49,13 @@ import java.util.List;
 import rx.Observer;
 import rx.Subscription;
 import rx.schedulers.Schedulers;
+import uk.co.sentinelweb.tvmod.browse.CardPresenter;
+import uk.co.sentinelweb.tvmod.Movie;
+import uk.co.sentinelweb.tvmod.MovieList;
+import uk.co.sentinelweb.tvmod.playback.PlaybackOverlayActivity;
+import uk.co.sentinelweb.tvmod.R;
+import uk.co.sentinelweb.tvmod.util.Utils;
+import uk.co.sentinelweb.tvmod.browse.MainActivity;
 
 /*
  * LeanbackDetailsFragment extends DetailsFragment, a Wrapper fragment for leanback details screens.
@@ -197,7 +204,7 @@ public class VideoDetailsFragment extends DetailsFragment {
 
     private void setupMovieListRow() {
         final String[] subcategories = {getString(R.string.related_movies)};
-        _subscribe = MovieList.setupMovies()
+        _subscribe = MovieList.setupMovies(getActivity())
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Observer<List<Movie>>() {
                     @Override

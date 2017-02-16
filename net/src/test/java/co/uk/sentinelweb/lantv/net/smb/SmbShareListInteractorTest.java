@@ -10,7 +10,7 @@ import co.uk.sentinelweb.lantv.domain.Media;
 /**
  * Created by robert on 12/02/2017.
  */
-public class ShareListInteractorTest {
+public class SmbShareListInteractorTest {
     @Before
     public void setUp() throws Exception {
 
@@ -18,7 +18,7 @@ public class ShareListInteractorTest {
 
     @Test
     public void getList() throws Exception {
-        final List<Media> list = new ShareListInteractor().getList(TestData.IP_ADDR,
+        final List<Media> list = new SmbShareListInteractor().getList(TestData.IP_ADDR,
                 TestData.SHARE,
                 TestData.PATH,
                 TestData.USER,
