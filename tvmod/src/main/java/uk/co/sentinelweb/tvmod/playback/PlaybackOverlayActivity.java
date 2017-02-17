@@ -29,7 +29,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
-import uk.co.sentinelweb.tvmod.Movie;
+import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.R;
 
 /**

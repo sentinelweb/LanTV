@@ -15,10 +15,8 @@
 package uk.co.sentinelweb.tvmod.browse;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
@@ -32,10 +30,6 @@ import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -44,38 +38,28 @@ import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import rx.Observer;
-import rx.Subscription;
-import rx.schedulers.Schedulers;
-import uk.co.sentinelweb.tvmod.Movie;
-import uk.co.sentinelweb.tvmod.MovieList;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
 import uk.co.sentinelweb.tvmod.error.BrowseErrorActivity;
 import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
+import uk.co.sentinelweb.tvmod.model.Category;
+import uk.co.sentinelweb.tvmod.model.Movie;
 
-public class MainFragment extends BrowseFragment {
+public class MainFragment extends BrowseFragment implements MainMvpContract.View {
     private static final String TAG = "MainFragment";
 
-    private static final int BACKGROUND_UPDATE_DELAY = 300;
-    private static final int GRID_ITEM_WIDTH = 200;
-    private static final int GRID_ITEM_HEIGHT = 200;
-    private static final int NUM_ROWS = 6;
-    private static final int NUM_COLS = 15;
+//    private static final int GRID_ITEM_WIDTH = 200;
+//    private static final int GRID_ITEM_HEIGHT = 200;
 
-    private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mRowsAdapter;
     private Drawable mDefaultBackground;
     private DisplayMetrics mMetrics;
-    private Timer mBackgroundTimer;
     private URI mBackgroundURI;
     private BackgroundManager mBackgroundManager;
-    private Subscription _subscribe;
+
+    MainMvpContract.Presenter presenter;
+    private CardPresenter _cardPresenter;
 
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
@@ -86,83 +70,101 @@ public class MainFragment extends BrowseFragment {
 
         setupUIElements();
 
-        loadRows();
-
         setupEventListeners();
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+
+    }
+
+    @Override
     public void onStop() {
-        if (_subscribe != null) {
-            _subscribe.unsubscribe();
-            _subscribe = null;
-        }
+
         super.onStop();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        presenter.subscribe();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        presenter.unsubscribe();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (null != mBackgroundTimer) {
-            Log.d(TAG, "onDestroy: " + mBackgroundTimer.toString());
-            mBackgroundTimer.cancel();
+    }
+
+    @Override
+    public void setData(final MainFragmentModel model) {
+        final boolean create = mRowsAdapter == null;
+        if (create) {
+            mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+            _cardPresenter = new CardPresenter();
+            int i = 0;
+            for (final Category category : model._categories) {
+                addRow(category, i++);
+            }
+            //Log.d(getClass().getSimpleName(),"movies:"+list.size());
+
+//        final HeaderItem gridHeader = new HeaderItem(i, "PREFERENCES");
+
+//        final GridItemPresenter mGridPresenter = new GridItemPresenter();
+//        final ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
+//        gridRowAdapter.add(getResources().getString(R.string.grid_view));
+//        gridRowAdapter.add(getString(R.string.error_fragment));
+//        gridRowAdapter.add(getResources().getString(R.string.personal_settings));
+//        mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+            setAdapter(mRowsAdapter);
+        } else {
+            updateAdapter(model);
         }
     }
 
-    private void loadRows() {
-        _subscribe = MovieList.setupMovies(getActivity())
-                .subscribeOn(Schedulers.io())
-                .subscribe(new Observer<List<Movie>>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(final Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(final List<Movie> movies) {
-                processList(movies);
-            }
-        });
-
-
+    private void addRow(final Category category, final long index) {
+        final ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(_cardPresenter);
+        for (final Movie m : category.movies()) {
+            listRowAdapter.add(m);
+        }
+        final HeaderItem header = new HeaderItem(index, category.name() + " (" + category.count() + ")");
+        mRowsAdapter.add(new ListRow(header, listRowAdapter));
     }
 
-    private void processList(final List<Movie> list) {
-        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        final CardPresenter cardPresenter = new CardPresenter();
-
-        int i;
-        for (i = 0; i < NUM_ROWS; i++) {
-            if (i != 0) {
-                Collections.shuffle(list);
+    private void updateAdapter(final MainFragmentModel model) {
+        int categoryNumber = 0;
+        for (final Category category : model._categories) {
+            final ArrayObjectAdapter listRowAdapter;
+            if (categoryNumber < mRowsAdapter.size()) {
+                listRowAdapter = (ArrayObjectAdapter) ((ListRow) mRowsAdapter.get(categoryNumber)).getAdapter();
+                int j = 0;
+                for (final Movie m : category.movies()) {
+                    if (j < listRowAdapter.size()) {
+                        listRowAdapter.replace(j, m);
+                    } else {
+                        listRowAdapter.add(m);
+                    }
+                    j++;
+                }
+                if (j < listRowAdapter.size()) {
+                    listRowAdapter.removeItems(j, listRowAdapter.size());
+                }
+                listRowAdapter.notifyArrayItemRangeChanged(0,listRowAdapter.size());
+            } else {
+                addRow(category, categoryNumber);
             }
-            final ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
-            for (int j = 0; j < NUM_COLS && j < list.size(); j++) {
-                listRowAdapter.add(list.get(j % 5));
-            }
-            final HeaderItem header = new HeaderItem(i, MovieList.MOVIE_CATEGORY[i]);
-            mRowsAdapter.add(new ListRow(header, listRowAdapter));
+            categoryNumber++;
         }
-
-        final HeaderItem gridHeader = new HeaderItem(i, "PREFERENCES");
-
-        final GridItemPresenter mGridPresenter = new GridItemPresenter();
-        final ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
-        gridRowAdapter.add(getResources().getString(R.string.grid_view));
-        gridRowAdapter.add(getString(R.string.error_fragment));
-        gridRowAdapter.add(getResources().getString(R.string.personal_settings));
-        mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
-
-        setAdapter(mRowsAdapter);
+        mRowsAdapter.notifyArrayItemRangeChanged(0, mRowsAdapter.size());
     }
 
     private void prepareBackgroundManager() {
-
         mBackgroundManager = BackgroundManager.getInstance(getActivity());
         mBackgroundManager.attach(getActivity().getWindow());
         mDefaultBackground = getResources().getDrawable(R.drawable.default_background);
@@ -171,8 +173,6 @@ public class MainFragment extends BrowseFragment {
     }
 
     private void setupUIElements() {
-        // setBadgeDrawable(getActivity().getResources().getDrawable(
-        // R.drawable.videos_by_google_banner));
         setTitle(getString(R.string.browse_title)); // Badge, when set, takes precedent
         // over title
         setHeadersState(HEADERS_ENABLED);
@@ -185,43 +185,36 @@ public class MainFragment extends BrowseFragment {
     }
 
     private void setupEventListeners() {
-        setOnSearchClickedListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(final View view) {
-                Toast.makeText(getActivity(), "Implement your own in-app search", Toast.LENGTH_LONG)
-                        .show();
-            }
-        });
-
+        setOnSearchClickedListener((view) -> Toast.makeText(getActivity(), "Implement your own in-app search", Toast.LENGTH_LONG).show());
         setOnItemViewClickedListener(new ItemViewClickedListener());
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
+
     }
 
-    protected void updateBackground(final String uri) {
-        final int width = mMetrics.widthPixels;
-        final int height = mMetrics.heightPixels;
-        Glide.with(getActivity())
-                .load(uri)
-                .centerCrop()
-                .error(mDefaultBackground)
-                .into(new SimpleTarget<GlideDrawable>(width, height) {
-                    @Override
-                    public void onResourceReady(final GlideDrawable resource,
-                                                final GlideAnimation<? super GlideDrawable>
-                                                        glideAnimation) {
-                        mBackgroundManager.setDrawable(resource);
-                    }
-                });
-        mBackgroundTimer.cancel();
-    }
-
-    private void startBackgroundTimer() {
-        if (null != mBackgroundTimer) {
-            mBackgroundTimer.cancel();
+    @Override
+    public void updateBackGround() {
+        if (mBackgroundURI != null) {
+            final int width = mMetrics.widthPixels;
+            final int height = mMetrics.heightPixels;
+            Glide.with(getActivity())
+                    .load(mBackgroundURI)
+                    .centerCrop()
+                    .error(mDefaultBackground)
+                    .into(new SimpleTarget<GlideDrawable>(width, height) {
+                        @Override
+                        public void onResourceReady(final GlideDrawable resource,
+                                                    final GlideAnimation<? super GlideDrawable>
+                                                            glideAnimation) {
+                            mBackgroundManager.setDrawable(resource);
+                        }
+                    });
+            mBackgroundURI = null;
         }
-        mBackgroundTimer = new Timer();
-        mBackgroundTimer.schedule(new UpdateBackgroundTask(), BACKGROUND_UPDATE_DELAY);
+    }
+
+    @Override
+    public void setPresenter(final MainMvpContract.Presenter presenter) {
+        this.presenter = presenter;
     }
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
@@ -261,49 +254,32 @@ public class MainFragment extends BrowseFragment {
                                    final RowPresenter.ViewHolder rowViewHolder, final Row row) {
             if (item instanceof Movie) {
                 mBackgroundURI = ((Movie) item).getBackgroundImageURI();
-                startBackgroundTimer();
             }
 
         }
     }
 
-    private class UpdateBackgroundTask extends TimerTask {
-
-        @Override
-        public void run() {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (mBackgroundURI != null) {
-                        updateBackground(mBackgroundURI.toString());
-                    }
-                }
-            });
-
-        }
-    }
-
-    private class GridItemPresenter extends Presenter {
-        @Override
-        public ViewHolder onCreateViewHolder(final ViewGroup parent) {
-            final TextView view = new TextView(parent.getContext());
-            view.setLayoutParams(new ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT));
-            view.setFocusable(true);
-            view.setFocusableInTouchMode(true);
-            view.setBackgroundColor(getResources().getColor(R.color.default_background));
-            view.setTextColor(Color.WHITE);
-            view.setGravity(Gravity.CENTER);
-            return new ViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(final ViewHolder viewHolder, final Object item) {
-            ((TextView) viewHolder.view).setText((String) item);
-        }
-
-        @Override
-        public void onUnbindViewHolder(final ViewHolder viewHolder) {
-        }
-    }
+//    private class GridItemPresenter extends Presenter {
+//        @Override
+//        public ViewHolder onCreateViewHolder(final ViewGroup parent) {
+//            final TextView view = new TextView(parent.getContext());
+//            view.setLayoutParams(new ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT));
+//            view.setFocusable(true);
+//            view.setFocusableInTouchMode(true);
+//            view.setBackgroundColor(getResources().getColor(R.color.default_background));
+//            view.setTextColor(Color.WHITE);
+//            view.setGravity(Gravity.CENTER);
+//            return new ViewHolder(view);
+//        }
+//
+//        @Override
+//        public void onBindViewHolder(final ViewHolder viewHolder, final Object item) {
+//            ((TextView) viewHolder.view).setText((String) item);
+//        }
+//
+//        @Override
+//        public void onUnbindViewHolder(final ViewHolder viewHolder) {
+//        }
+//    }
 
 }

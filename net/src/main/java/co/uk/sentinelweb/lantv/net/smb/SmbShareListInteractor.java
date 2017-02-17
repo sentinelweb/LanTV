@@ -25,7 +25,7 @@ public class SmbShareListInteractor {
     public List<Media> getList(final String ipAddr, final String shareName, final String dirname, final String username, final String password) {
         jcifs.Config.setProperty("jcifs.smb.client.username", username);
         jcifs.Config.setProperty("jcifs.smb.client.password", password);
-        final SmbFile file;
+        final SmbFile parent;
         SmbFile[] files = new SmbFile[0];
 
         final String url = "smb://" + ipAddr + "/" +
@@ -36,32 +36,33 @@ public class SmbShareListInteractor {
 
 
             System.out.println("Samba: " + "testing url: " + url);
-            file = new SmbFile(url);
+            parent = new SmbFile(url);
 
             final long t1 = System.currentTimeMillis();
             try {
-                files = file.listFiles();
+                files = parent.listFiles();
                 System.out.println("Samba: " + "list complete: " + url);
             } catch (final Exception e) {
                 e.printStackTrace();
             }
             final long t2 = System.currentTimeMillis() - t1;
-
+            int fileCount = 0;
+            int directoryCount = 0;
             for (int i = 0; i < files.length; i++) {
-                //System.out.println("Samba: " + files[i].getName());
                 try {
-                    if (files[i].isFile()) {
-                        list.add(Media.create(url + files[i].getName(),
-                                files[i].getName(),
-                                files[i].length(),
-                                new Date(files[i].lastModified())));
-                    }
+                    final SmbFile child = files[i];
+                    list.add(Media.create(url + child.getName(),
+                            child.getName(),
+                            child.length(),
+                            new Date(child.lastModified()), child.isDirectory(), child.isFile()));// isDirectory is always true?
+
+                    fileCount += child.isFile() ? 1 : 0;
+                    directoryCount += child.isDirectory() ? 1 : 0;
                 } catch (final SmbException e) {
                     e.printStackTrace();
                 }
             }
-            System.out.println("Samba: " + files.length + " files in " + t2 + "ms");
-
+            System.out.println("Samba: files:" + fileCount+" dirs:"+directoryCount+" total"+files.length + " files in " + t2 + "ms");
         } catch (final MalformedURLException e) {
             System.out.println("Samba: badurl" + url);
             e.printStackTrace();

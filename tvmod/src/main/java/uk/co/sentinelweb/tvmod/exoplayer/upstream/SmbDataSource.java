@@ -27,6 +27,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import co.uk.sentinelweb.lantv.net.smb.TestData;
 import jcifs.smb.SmbFile;
 
 /**
@@ -37,16 +38,16 @@ public final class SmbDataSource implements DataSource {
     /**
      * Thrown when IOException is encountered during local file read operation.
      */
-    public static class SmbFileDataSourceException extends IOException {
+    public static class SmbDataSourceException extends IOException {
 
-        public SmbFileDataSourceException(final IOException cause) {
+        public SmbDataSourceException(final IOException cause) {
             super(cause);
         }
 
     }
-    //private final AssetManager assetManager;
+
     private final TransferListener<? super SmbDataSource> listener;
-    SmbFile file;
+    private SmbFile file;
     private Uri uri;
     private InputStream inputStream;
     private long bytesRemaining;
@@ -60,12 +61,16 @@ public final class SmbDataSource implements DataSource {
     }
 
     @Override
-    public long open(final DataSpec dataSpec) throws AssetDataSource.AssetDataSourceException {
+    public long open(final DataSpec dataSpec) throws SmbDataSourceException {
         try {
             uri = dataSpec.uri;
-            final String[] login = new String(dataSpec.postBody).split(":");
-            jcifs.Config.setProperty("jcifs.smb.client.username", login[0]);
-            jcifs.Config.setProperty("jcifs.smb.client.password", login[1]);
+//            if (uri.getQueryParameter("u") != null && uri.getQueryParameter("p") != null) {
+//                jcifs.Config.setProperty("jcifs.smb.client.username", uri.getQueryParameter("u"));
+//                jcifs.Config.setProperty("jcifs.smb.client.password", uri.getQueryParameter("p"));
+//            }
+            jcifs.Config.setProperty("jcifs.smb.client.username", TestData.USER);
+            jcifs.Config.setProperty("jcifs.smb.client.password", TestData.PASS);
+
             file = new SmbFile(uri.toString());
 
             inputStream = file.getInputStream();
@@ -78,16 +83,16 @@ public final class SmbDataSource implements DataSource {
             if (dataSpec.length != C.LENGTH_UNSET) {
                 bytesRemaining = dataSpec.length;
             } else {
-                bytesRemaining = inputStream.available();
-                if (bytesRemaining == Integer.MAX_VALUE) {
-                    // assetManager.open() returns an AssetInputStream, whose available() implementation
-                    // returns Integer.MAX_VALUE if the remaining length is greater than (or equal to)
-                    // Integer.MAX_VALUE. We don't know the true length in this case, so treat as unbounded.
-                    bytesRemaining = C.LENGTH_UNSET;
-                }
+                bytesRemaining = file.getContentLength();//inputStream.available();
+//                if (bytesRemaining == Integer.MAX_VALUE) {
+//                    // assetManager.open() returns an AssetInputStream, whose available() implementation
+//                    // returns Integer.MAX_VALUE if the remaining length is greater than (or equal to)
+//                    // Integer.MAX_VALUE. We don't know the true length in this case, so treat as unbounded.
+//                    bytesRemaining = C.LENGTH_UNSET;
+//                }
             }
         } catch (final IOException e) {
-            throw new AssetDataSource.AssetDataSourceException(e);
+            throw new SmbDataSourceException(e);
         }
 
         opened = true;
@@ -135,14 +140,14 @@ public final class SmbDataSource implements DataSource {
     }
 
     @Override
-    public void close() throws SmbFileDataSourceException {
+    public void close() throws SmbDataSourceException {
         uri = null;
         try {
             if (inputStream != null) {
                 inputStream.close();
             }
         } catch (final IOException e) {
-            throw new SmbFileDataSourceException(e);
+            throw new SmbDataSourceException(e);
         } finally {
             inputStream = null;
             if (opened) {

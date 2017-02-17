@@ -9,8 +9,8 @@ import java.util.Date;
  */
 @AutoValue
 public abstract class Media {
-    public static Media create(final String url, final String title, final Long size, final Date modified) {
-        return new AutoValue_Media(url, title, size, modified);
+    public static Media create(final String url, final String title, final Long size, final Date modified, final boolean isDir, final boolean isFile) {
+        return new AutoValue_Media(url, title, size, modified, isDir, isFile);
     }
 
     public abstract String url();
@@ -20,6 +20,10 @@ public abstract class Media {
     public abstract Long size();
 
     public abstract Date modified();
+
+    public abstract boolean isDirectory();
+
+    public abstract boolean isFile();
 
 
 }

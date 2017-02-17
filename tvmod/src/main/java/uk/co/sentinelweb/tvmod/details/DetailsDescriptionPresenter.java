@@ -16,7 +16,7 @@ package uk.co.sentinelweb.tvmod.details;
 
 import android.support.v17.leanback.widget.AbstractDetailsDescriptionPresenter;
 
-import uk.co.sentinelweb.tvmod.Movie;
+import uk.co.sentinelweb.tvmod.model.Movie;
 
 public class DetailsDescriptionPresenter extends AbstractDetailsDescriptionPresenter {
 

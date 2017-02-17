@@ -9,6 +9,6 @@ public class TestData {
     public static final String USER = "robert";
     public static final String PASS = "satori";
     public static final String SHARE = "Drobo";
-    public static final String PATH = "video/movies/superhero/";
+    public static final String PATH = "video/movies/";
 
 }

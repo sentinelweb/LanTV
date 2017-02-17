@@ -1,6 +1,8 @@
 package uk.co.sentinelweb.tvmod.util;
 
 import android.content.Context;
+import android.os.Environment;
+import android.os.StatFs;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,6 +15,7 @@ import java.io.OutputStream;
  */
 
 public class FileUtils {
+
     public static String getExt(final String name) {
         final String ext = name.substring(name.lastIndexOf(".") + 1);
         return ext;
@@ -48,7 +51,14 @@ public class FileUtils {
                 e.printStackTrace();
             }
         }
-
-
     }
+
+    public static long getFreeSpace() {
+        final StatFs stat = new StatFs(Environment.getExternalStorageDirectory().getPath());
+        final double sdAvailSize = (double) stat.getAvailableBlocksLong()
+                * (double) stat.getBlockSizeLong();
+        final double mbAvailable = sdAvailSize / 1024 / 1024;
+        return (long) mbAvailable;
+    }
+
 }

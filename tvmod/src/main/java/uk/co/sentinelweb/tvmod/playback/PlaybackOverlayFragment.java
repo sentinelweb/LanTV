@@ -59,8 +59,8 @@ import java.util.List;
 import rx.Observer;
 import rx.Subscription;
 import rx.schedulers.Schedulers;
-import uk.co.sentinelweb.tvmod.Movie;
-import uk.co.sentinelweb.tvmod.MovieList;
+import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.MovieList;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.browse.CardPresenter;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
@@ -112,7 +112,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         mSelectedMovie = (Movie) getActivity()
                 .getIntent().getSerializableExtra(DetailsActivity.MOVIE);
 
-        _subscribe = MovieList.setupMovies(getActivity())
+        _subscribe = MovieList.setupMovies()
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Observer<List<Movie>>() {
                     @Override
@@ -234,7 +234,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         final Movie movie = mItems.get(mCurrentItem);
         final MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            mmr.setDataSource(movie.getVideoUrl(), new HashMap<String, String>());
+            mmr.setDataSource(movie.getVideoUrl(), new HashMap<>());
         } else {
             mmr.setDataSource(movie.getVideoUrl());
         }

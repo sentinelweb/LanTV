@@ -22,7 +22,7 @@ import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 
-import uk.co.sentinelweb.tvmod.Movie;
+import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.R;
 
 /*

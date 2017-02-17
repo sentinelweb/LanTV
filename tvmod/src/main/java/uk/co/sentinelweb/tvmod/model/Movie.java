@@ -12,7 +12,7 @@
  * the License.
  */
 
-package uk.co.sentinelweb.tvmod;
+package uk.co.sentinelweb.tvmod.model;
 
 import android.util.Log;
 
@@ -51,7 +51,7 @@ public class Movie implements Serializable {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(final long id) {
         this.id = id;
     }
 
@@ -59,7 +59,7 @@ public class Movie implements Serializable {
         return title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(final String title) {
         this.title = title;
     }
 
@@ -67,7 +67,7 @@ public class Movie implements Serializable {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(final String description) {
         this.description = description;
     }
 
@@ -75,7 +75,7 @@ public class Movie implements Serializable {
         return studio;
     }
 
-    public void setStudio(String studio) {
+    public void setStudio(final String studio) {
         this.studio = studio;
     }
 
@@ -83,7 +83,7 @@ public class Movie implements Serializable {
         return videoUrl;
     }
 
-    public void setVideoUrl(String videoUrl) {
+    public void setVideoUrl(final String videoUrl) {
         this.videoUrl = videoUrl;
     }
 
@@ -91,7 +91,7 @@ public class Movie implements Serializable {
         return bgImageUrl;
     }
 
-    public void setBackgroundImageUrl(String bgImageUrl) {
+    public void setBackgroundImageUrl(final String bgImageUrl) {
         this.bgImageUrl = bgImageUrl;
     }
 
@@ -99,7 +99,7 @@ public class Movie implements Serializable {
         return cardImageUrl;
     }
 
-    public void setCardImageUrl(String cardImageUrl) {
+    public void setCardImageUrl(final String cardImageUrl) {
         this.cardImageUrl = cardImageUrl;
     }
 
@@ -107,7 +107,7 @@ public class Movie implements Serializable {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(final String category) {
         this.category = category;
     }
 
@@ -115,7 +115,7 @@ public class Movie implements Serializable {
         try {
             Log.d("BACK MOVIE: ", bgImageUrl);
             return new URI(getBackgroundImageUrl());
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             Log.d("URI exception: ", bgImageUrl);
             return null;
         }
@@ -124,7 +124,7 @@ public class Movie implements Serializable {
     public URI getCardImageURI() {
         try {
             return new URI(getCardImageUrl());
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             return null;
         }
     }

@@ -76,7 +76,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import uk.co.sentinelweb.tvmod.Movie;
+import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
 import uk.co.sentinelweb.tvmod.util.FileUtils;
