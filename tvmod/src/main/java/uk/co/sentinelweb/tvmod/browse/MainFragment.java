@@ -48,10 +48,10 @@ import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
 import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.util.SupportedMedia;
+import uk.co.sentinelweb.tvmod.util.VlcUtil;
 
 public class MainFragment extends BrowseFragment implements MainMvpContract.View {
     private static final String TAG = "MainFragment";
-    public static final int VLC_REQUEST_CODE = 42;
 
 //    private static final int GRID_ITEM_WIDTH = 200;
 //    private static final int GRID_ITEM_HEIGHT = 200;
@@ -65,10 +65,18 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     MainMvpContract.Presenter presenter;
     private CardPresenter _cardPresenter;
 
+    private final VlcUtil _vlcUtil;
+
+    public MainFragment() {
+        _vlcUtil = new VlcUtil();
+    }
+
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
+
+
 
         prepareBackgroundManager();
 
@@ -227,24 +235,14 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
      * @param movie
      */
     @Override
-    public void launchVlc(Movie movie) {
-        Uri uri = Uri.parse("file:///storage/emulated/0/Movies/KUNG FURY Official Movie.mp4");
-        Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
-        vlcIntent.setComponent(new ComponentName("org.videolan.vlc", "org.videolan.vlc.gui.video.VideoPlayerActivity"));
-        vlcIntent.setPackage("org.videolan.vlc");
-        vlcIntent.setDataAndTypeAndNormalize(uri, "video/*");
-        vlcIntent.putExtra("title", "Kung Fury");
-        //vlcIntent.putExtra("from_start", false);
-        //vlcIntent.putExtra("position", 90000l);
-        //vlcIntent.putExtra("subtitles_location", "/sdcard/Movies/Fifty-Fifty.srt");
-        startActivityForResult(vlcIntent, VLC_REQUEST_CODE);
+    public void launchVlc(final Movie movie) {
+        _vlcUtil.launchVlc(getActivity(), movie);
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        data.getLongExtra("extra_position", -1); //Last position in media when player exited
-        data.getLongExtra("extra_duration", -1); //	long	Total duration of the media
+        _vlcUtil.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -261,19 +259,33 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
             if (item instanceof Movie) {
                 mBackgroundURI = ((Movie) item).getBackgroundImageURI();
             }
-
         }
     }
-
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
         public void onItemClicked(final Presenter.ViewHolder itemViewHolder, final Object item,
                                   final RowPresenter.ViewHolder rowViewHolder, final Row row) {
-
             if (item instanceof Movie) {
-                final Movie movie = (Movie) item;
-                Log.d(TAG, "Item: " + item.toString());
+                presenter.launchMovie((Movie) item);
+            } else if (item instanceof String) {
+                showError((String) item);
+            }
+        }
+    }
+
+    private void showError(String item) {
+        if (item.indexOf(getString(R.string.error_fragment)) >= 0) {
+            final Intent intent = new Intent(getActivity(), BrowseErrorActivity.class);
+            startActivity(intent);
+        } else {
+            Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT)
+                    .show();
+        }
+    }
+
+
+// scene transition to details
 //                final Intent intent = new Intent(getActivity(), DetailsActivity.class);
 //                intent.putExtra(DetailsActivity.MOVIE, movie);
 //
@@ -282,18 +294,6 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
 //                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
 //                        DetailsActivity.SHARED_ELEMENT_NAME).toBundle();
 //                getActivity().startActivity(intent, bundle);
-                presenter.launchMovie((Movie) item);
-            } else if (item instanceof String) {
-                if (((String) item).indexOf(getString(R.string.error_fragment)) >= 0) {
-                    final Intent intent = new Intent(getActivity(), BrowseErrorActivity.class);
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT)
-                            .show();
-                }
-            }
-        }
-    }
 
 //    private class GridItemPresenter extends Presenter {
 //        @Override

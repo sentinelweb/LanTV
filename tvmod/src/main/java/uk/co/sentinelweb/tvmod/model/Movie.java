@@ -35,6 +35,8 @@ public class Movie implements Serializable {
     private String videoUrl;
     private String extension;
     private String category;
+    private long position;
+    private long duration;
 
     public Movie() {
     }
@@ -111,6 +113,22 @@ public class Movie implements Serializable {
         this.category = category;
     }
 
+    public long getDuration() {
+        return duration;
+    }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    public long getPosition() {
+        return position;
+    }
+
+    public void setPosition(long position) {
+        this.position = position;
+    }
+
     public URI getBackgroundImageURI() {
         try {
             Log.d("BACK MOVIE: ", bgImageUrl);
@@ -128,6 +146,8 @@ public class Movie implements Serializable {
             return null;
         }
     }
+
+
 
     @Override
     public String toString() {
