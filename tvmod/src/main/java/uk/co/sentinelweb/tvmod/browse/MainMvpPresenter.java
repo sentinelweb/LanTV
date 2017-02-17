@@ -4,11 +4,13 @@ package uk.co.sentinelweb.tvmod.browse;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import co.uk.sentinelweb.lantv.domain.Media;
+import co.uk.sentinelweb.lantv.net.smb.SmbFileReadInteractor;
 import co.uk.sentinelweb.lantv.net.smb.SmbShareListInteractor;
 import co.uk.sentinelweb.lantv.net.smb.TestData;
 import rx.Observable;
@@ -19,6 +21,8 @@ import rx.subscriptions.CompositeSubscription;
 import uk.co.sentinelweb.tvmod.mapper.CategoryMapper;
 import uk.co.sentinelweb.tvmod.mapper.MovieMapper;
 import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.util.FileUtils;
+import uk.co.sentinelweb.tvmod.util.HiddenFiles;
 import uk.co.sentinelweb.tvmod.util.SupportedMedia;
 
 public class MainMvpPresenter implements MainMvpContract.Presenter {
@@ -27,10 +31,13 @@ public class MainMvpPresenter implements MainMvpContract.Presenter {
     MovieMapper _movieMapper = new MovieMapper();
     CategoryMapper _categoryMapper = new CategoryMapper();
     MainFragmentModel model;
+    private SmbShareListInteractor smbShareListInteractor;
+    private SmbFileReadInteractor smbFileReadInteractor;
 
     public MainMvpPresenter(final MainMvpContract.View view) {
         this.view = view;
         model = new MainFragmentModel(new ArrayList<>());
+        smbShareListInteractor = new SmbShareListInteractor();
     }
 
     @Override
@@ -63,14 +70,14 @@ public class MainMvpPresenter implements MainMvpContract.Presenter {
 
     @NonNull
     private Observable<MainFragmentModel> getSambaListObservable() {
-        final SmbShareListInteractor smbShareListInteractor = new SmbShareListInteractor();
+
 
         final Observable<List<Media>> map =
                 //Observable.just("superhero/", "fantasy/", "action/", "sci-fi/")// TODO list top dir
                 smbShareListInteractor.getListObservable(TestData.IP_ADDR, TestData.SHARE, TestData.PATH, TestData.USER, TestData.PASS)
                         .observeOn(Schedulers.io())
                         .flatMap((directoryList) -> Observable.from(directoryList))
-                        .filter((media -> media.isDirectory() && media.url().indexOf(".DS_Store") == -1))
+                        .filter((media -> media.isDirectory() && !HiddenFiles.isExcludedUrl(media.url())))
                         .map((media -> media.url().substring(media.url().indexOf(TestData.SHARE) + TestData.SHARE.length() + 1)))
                         .doOnNext(path -> Log.d(MainMvpPresenter.class.getSimpleName(), "path:" + path))
                         //.onErrorResumeNext((throwable)-> {Log.d(MainMvpPresenter.class.getSimpleName(), "error getting directory:", throwable);}, () ->{})
@@ -92,13 +99,21 @@ public class MainMvpPresenter implements MainMvpContract.Presenter {
     }
 
     @Override
-    public void launchMovie(Movie movie) {
+    public void launchMovie(final Movie movie) {
         if (SupportedMedia.isSupported(movie.getExtension())) {
             view.launchExoplayer(movie);
         } else {
-            view.launchVlc(movie);
+            // cache file and use VLC
+            final File bufferFile = view.getBufferFile(movie);
+            final Subscription subscription = smbFileReadInteractor
+                    .openFileObservable(movie.getVideoUrl(), TestData.USER, TestData.PASS)
+                    .observeOn(Schedulers.io())
+                    .doOnNext(inputStream -> FileUtils.copyFileFromStream(bufferFile, inputStream))
+                    .subscribeOn(Schedulers.io())
+                    .subscribe((inputStream) -> { },
+                            (throwable) -> view.showError(throwable),
+                            () -> { view.closeDownloadDialog(); view.launchVlc(movie); });
+            _subscription.add(subscription);
         }
     }
-
-
 }

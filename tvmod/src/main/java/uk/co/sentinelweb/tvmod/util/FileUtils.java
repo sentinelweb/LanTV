@@ -63,6 +63,10 @@ public final class FileUtils {
         return (long) mbAvailable;
     }
 
+    public static File getBufferFile(Context c, String inputName) {
+        return new File(c.getFilesDir(), "buffer." + getExt(inputName));
+    }
+
     /**
      * Generic copy logic to write local file from stream
      * @param target

@@ -8,7 +8,9 @@ import java.util.Map;
  */
 
 public enum SupportedMedia {
-    MP4, MP3, M4V, M4A, OGG;
+    MP4(true), MP3(true), M4V(true), M4A(true), OGG(true), AVI(false), MKV(false);
+    Boolean supported = null;
+
     static Map<String, SupportedMedia> valueMap;
     static {
         valueMap = new HashMap<>();
@@ -17,7 +19,11 @@ public enum SupportedMedia {
         }
     }
 
-    public static boolean isSupported(String ext) {
+    public static boolean isSupported(final String ext) {
         return valueMap.containsKey(ext);
+    }
+
+    SupportedMedia(final Boolean supported) {
+        this.supported = supported;
     }
 }

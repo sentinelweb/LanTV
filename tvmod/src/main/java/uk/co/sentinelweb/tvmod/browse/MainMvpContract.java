@@ -1,5 +1,7 @@
 package uk.co.sentinelweb.tvmod.browse;
 
+import java.io.File;
+
 import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.mvp.BaseMvpContract;
 
@@ -19,6 +21,17 @@ public interface MainMvpContract  {
 
         void launchVlc(Movie movie);
 
+        void showDownloadDialog();
+
+        void updateDownloadDialog(String message);
+
+        void closeDownloadDialog();
+
+        void showError(Throwable throwable);
+
+        void showError(String message);
+
+        File getBufferFile(Movie movie);
     }
 
 }

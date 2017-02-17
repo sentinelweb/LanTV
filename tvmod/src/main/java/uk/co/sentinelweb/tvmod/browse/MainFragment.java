@@ -16,6 +16,7 @@ package uk.co.sentinelweb.tvmod.browse;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
@@ -39,6 +41,7 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
+import java.io.File;
 import java.net.URI;
 
 import uk.co.sentinelweb.tvmod.R;
@@ -47,6 +50,7 @@ import uk.co.sentinelweb.tvmod.error.BrowseErrorActivity;
 import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
 import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.util.FileUtils;
 import uk.co.sentinelweb.tvmod.util.SupportedMedia;
 import uk.co.sentinelweb.tvmod.util.VlcUtil;
 
@@ -66,6 +70,7 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     private CardPresenter _cardPresenter;
 
     private final VlcUtil _vlcUtil;
+    private AlertDialog downloadDialog;
 
     public MainFragment() {
         _vlcUtil = new VlcUtil();
@@ -75,7 +80,6 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     public void onActivityCreated(final Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
-
 
 
         prepareBackgroundManager();
@@ -252,6 +256,50 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
         getActivity().startActivity(intent, null);
     }
 
+    @Override
+    public void showDownloadDialog() {
+        downloadDialog = new AlertDialog.Builder(getActivity(), R.style.Theme_Leanback)
+                .setTitle("Downloading")
+                .setMessage("Downloading ...")
+                .create();
+        downloadDialog.show();
+    }
+
+    @Override
+    public void updateDownloadDialog(final String message) {
+        if (downloadDialog != null) {
+            downloadDialog.setMessage(message);
+        }
+    }
+
+    @Override
+    public void closeDownloadDialog() {
+        if (downloadDialog != null) {
+            downloadDialog.dismiss();
+        }
+    }
+
+    @Override
+    public File getBufferFile(Movie movie) {
+        return FileUtils.getBufferFile(getActivity(), movie.getVideoUrl());
+    }
+
+    @Override
+    public void showError(Throwable error) {
+        showError(error.getMessage() + "(" + error.getClass().getSimpleName() + ")");
+    }
+
+    @Override
+    public void showError(String item) {
+        if (item.indexOf(getString(R.string.error_fragment)) >= 0) {
+            final Intent intent = new Intent(getActivity(), BrowseErrorActivity.class);
+            startActivity(intent);
+        } else {
+            Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT)
+                    .show();
+        }
+    }
+
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
         @Override
         public void onItemSelected(final Presenter.ViewHolder itemViewHolder, final Object item,
@@ -274,15 +322,7 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
         }
     }
 
-    private void showError(String item) {
-        if (item.indexOf(getString(R.string.error_fragment)) >= 0) {
-            final Intent intent = new Intent(getActivity(), BrowseErrorActivity.class);
-            startActivity(intent);
-        } else {
-            Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT)
-                    .show();
-        }
-    }
+
 
 
 // scene transition to details
