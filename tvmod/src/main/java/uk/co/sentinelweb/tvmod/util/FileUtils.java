@@ -3,6 +3,7 @@ package uk.co.sentinelweb.tvmod.util;
 import android.content.Context;
 import android.os.Environment;
 import android.os.StatFs;
+import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,8 +18,7 @@ import java.io.OutputStream;
 public class FileUtils {
 
     public static String getExt(final String name) {
-        final String ext = name.substring(name.lastIndexOf(".") + 1);
-        return ext;
+        return MimeTypeMap.getFileExtensionFromUrl(name);
     }
 
     public static void copyFileFromAsset(final Context c, final String fileName, final File target) {

@@ -18,6 +18,8 @@ import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 import uk.co.sentinelweb.tvmod.mapper.CategoryMapper;
 import uk.co.sentinelweb.tvmod.mapper.MovieMapper;
+import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.util.SupportedMedia;
 
 public class MainMvpPresenter implements MainMvpContract.Presenter {
     private CompositeSubscription _subscription;
@@ -38,15 +40,13 @@ public class MainMvpPresenter implements MainMvpContract.Presenter {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe((movies) -> view.setData(movies),
-                        (throwable) -> {
-                        },
+                        (throwable) -> Log.d(MainMvpPresenter.class.getSimpleName(), "Load error:", throwable),
                         () -> {
                         }
                 );
         final Subscription _timerSubscription = Observable.timer(30, TimeUnit.SECONDS)
                 .subscribe((movies) -> view.updateBackGround(),
-                        (throwable) -> {
-                        },
+                        (throwable) -> Log.d(MainMvpPresenter.class.getSimpleName(), "Timer error:", throwable),
                         () -> {
                         }
                 );
@@ -70,8 +70,8 @@ public class MainMvpPresenter implements MainMvpContract.Presenter {
                 smbShareListInteractor.getListObservable(TestData.IP_ADDR, TestData.SHARE, TestData.PATH, TestData.USER, TestData.PASS)
                         .observeOn(Schedulers.io())
                         .flatMap((directoryList) -> Observable.from(directoryList))
-                        .filter((media -> media.isDirectory() && media.url().indexOf(".DS_Store")==-1))
-                        .map((media -> media.url().substring(media.url().indexOf(TestData.SHARE)+TestData.SHARE.length()+1)))
+                        .filter((media -> media.isDirectory() && media.url().indexOf(".DS_Store") == -1))
+                        .map((media -> media.url().substring(media.url().indexOf(TestData.SHARE) + TestData.SHARE.length() + 1)))
                         .doOnNext(path -> Log.d(MainMvpPresenter.class.getSimpleName(), "path:" + path))
                         //.onErrorResumeNext((throwable)-> {Log.d(MainMvpPresenter.class.getSimpleName(), "error getting directory:", throwable);}, () ->{})
                         .map((path) -> smbShareListInteractor.getList(TestData.IP_ADDR, TestData.SHARE, path, TestData.USER, TestData.PASS));
@@ -90,4 +90,15 @@ public class MainMvpPresenter implements MainMvpContract.Presenter {
                     return model;
                 });
     }
+
+    @Override
+    public void launchMovie(Movie movie) {
+        if (SupportedMedia.isSupported(movie.getExtension())) {
+            view.launchExoplayer(movie);
+        } else {
+            view.launchVlc(movie);
+        }
+    }
+
+
 }

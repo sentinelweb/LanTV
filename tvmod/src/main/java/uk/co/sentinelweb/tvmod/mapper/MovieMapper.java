@@ -44,7 +44,7 @@ public class MovieMapper {
         Movie.incCount();
         movie.setTitle(title);
         movie.setDescription(description);
-        movie.setStudio(studio);
+        movie.setExtension(studio);
         movie.setCategory(category);
         movie.setCardImageUrl(cardImageUrl);
         movie.setBackgroundImageUrl(bgImageUrl);

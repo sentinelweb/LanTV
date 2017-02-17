@@ -149,7 +149,7 @@ public class PlaybackOverlayActivity extends Activity implements
 
         // And at minimum the title and artist for legacy support
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, title);
-        metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, movie.getStudio());
+        metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, movie.getExtension());
 
         Glide.with(this)
                 .load(Uri.parse(movie.getCardImageUrl()))

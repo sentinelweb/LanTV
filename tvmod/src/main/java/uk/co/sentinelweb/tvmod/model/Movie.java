@@ -33,7 +33,7 @@ public class Movie implements Serializable {
     private String bgImageUrl;
     private String cardImageUrl;
     private String videoUrl;
-    private String studio;
+    private String extension;
     private String category;
 
     public Movie() {
@@ -71,12 +71,12 @@ public class Movie implements Serializable {
         this.description = description;
     }
 
-    public String getStudio() {
-        return studio;
+    public String getExtension() {
+        return extension;
     }
 
-    public void setStudio(final String studio) {
-        this.studio = studio;
+    public void setExtension(final String extension) {
+        this.extension = extension;
     }
 
     public String getVideoUrl() {

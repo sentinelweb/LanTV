@@ -312,7 +312,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         if (mPlaybackControlsRow.getItem() != null) {
             final Movie item = (Movie) mPlaybackControlsRow.getItem();
             item.setTitle(mItems.get(mCurrentItem).getTitle());
-            item.setStudio(mItems.get(mCurrentItem).getStudio());
+            item.setExtension(mItems.get(mCurrentItem).getExtension());
         }
         if (SHOW_IMAGE) {
             updateVideoImage(mItems.get(mCurrentItem).getCardImageURI().toString());
@@ -422,7 +422,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         @Override
         protected void onBindDescription(final ViewHolder viewHolder, final Object item) {
             viewHolder.getTitle().setText(((Movie) item).getTitle());
-            viewHolder.getSubtitle().setText(((Movie) item).getStudio());
+            viewHolder.getSubtitle().setText(((Movie) item).getExtension());
         }
     }
 }
