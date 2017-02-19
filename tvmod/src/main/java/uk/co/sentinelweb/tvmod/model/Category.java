@@ -2,6 +2,7 @@ package uk.co.sentinelweb.tvmod.model;
 
 import com.google.auto.value.AutoValue;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -9,7 +10,11 @@ import java.util.List;
  */
 
 @AutoValue
-public abstract class Category {
+public abstract class Category implements Serializable {
+
+
+    private static final long serialVersionUID = 7498636430317059873L;
+
     public static Category builder(final List<Movie> movies, final String name, final int count) {
         return new AutoValue_Category(movies, movies.size(),  name);
     }

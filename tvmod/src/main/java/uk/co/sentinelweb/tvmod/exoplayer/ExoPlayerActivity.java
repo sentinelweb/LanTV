@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,9 +77,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import uk.co.sentinelweb.tvmod.model.Movie;
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
+import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.util.FileUtils;
 
 /**
@@ -109,10 +112,16 @@ public class ExoPlayerActivity extends Activity implements OnClickListener, ExoP
 
     private Handler mainHandler;
     private EventLogger eventLogger;
-    private SimpleExoPlayerView simpleExoPlayerView;
-    private LinearLayout debugRootView;
-    private TextView debugTextView;
-    private Button retryButton;
+    @Bind(R.id.player_view)
+    protected SimpleExoPlayerView simpleExoPlayerView;
+    @Bind(R.id.controls_root)
+    protected LinearLayout debugRootView;
+    @Bind(R.id.debug_text_view)
+    protected TextView debugTextView;
+    @Bind(R.id.retry_button)
+    protected Button retryButton;
+    @Bind(R.id.progress)
+    protected ProgressBar progress;
 
     private DataSource.Factory mediaDataSourceFactory;
     private SimpleExoPlayer player;
@@ -126,6 +135,7 @@ public class ExoPlayerActivity extends Activity implements OnClickListener, ExoP
     private long resumePosition;
 
     ExoConfig _exoConfig;
+
 
     // Activity lifecycle
 
@@ -144,14 +154,16 @@ public class ExoPlayerActivity extends Activity implements OnClickListener, ExoP
         }
 
         setContentView(R.layout.exoplayer_activity);
+        ButterKnife.bind(this);
         final View rootView = findViewById(R.id.root);
         rootView.setOnClickListener(this);
-        debugRootView = (LinearLayout) findViewById(R.id.controls_root);
-        debugTextView = (TextView) findViewById(R.id.debug_text_view);
-        retryButton = (Button) findViewById(R.id.retry_button);
+
+//        debugRootView = (LinearLayout) findViewById(R.id.controls_root);
+//        debugTextView = (TextView) findViewById(R.id.debug_text_view);
+//        retryButton = (Button) findViewById(R.id.retry_button);
         retryButton.setOnClickListener(this);
 
-        simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
+        //simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
         simpleExoPlayerView.setControllerVisibilityListener(this);
         simpleExoPlayerView.requestFocus();
     }
@@ -418,6 +430,10 @@ public class ExoPlayerActivity extends Activity implements OnClickListener, ExoP
     public void onPlayerStateChanged(final boolean playWhenReady, final int playbackState) {
         if (playbackState == ExoPlayer.STATE_ENDED) {
             showControls();
+        } else if (playbackState == ExoPlayer.STATE_READY) {
+            progress.setVisibility(View.GONE);
+        } else if (playbackState == ExoPlayer.STATE_BUFFERING) {
+            progress.setVisibility(View.VISIBLE);
         }
         updateButtonVisibilities();
     }

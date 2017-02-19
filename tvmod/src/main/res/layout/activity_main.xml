@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <fragment android:id="@+id/main_browse_fragment"
-          android:name="uk.co.sentinelweb.tvmod.browse.MainFragment"
+          android:name="uk.co.sentinelweb.tvmod.browse.SmbBrowseFragment"
           xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
           android:layout_width="match_parent"
           android:layout_height="match_parent"
-          tools:context=".browse.MainActivity"
+          tools:context=".browse.SmbBrowseActivity"
           tools:deviceIds="tv"
           tools:ignore="MergeRootFrame"/>

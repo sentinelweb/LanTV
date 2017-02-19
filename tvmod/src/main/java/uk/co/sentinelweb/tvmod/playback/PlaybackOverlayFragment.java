@@ -56,14 +56,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
-import rx.schedulers.Schedulers;
-import uk.co.sentinelweb.tvmod.model.Movie;
-import uk.co.sentinelweb.tvmod.model.MovieList;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.browse.CardPresenter;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
+import uk.co.sentinelweb.tvmod.model.Movie;
 
 /*
  * Class for video playback with media control
@@ -112,8 +111,9 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         mSelectedMovie = (Movie) getActivity()
                 .getIntent().getSerializableExtra(DetailsActivity.MOVIE);
 
-        _subscribe = MovieList.setupMovies()
-                .subscribeOn(Schedulers.io())
+        _subscribe = Observable.<List<Movie>>empty()
+//                MovieList.setupMovies()
+//                .subscribeOn(Schedulers.io())
                 .subscribe(new Observer<List<Movie>>() {
                     @Override
                     public void onCompleted() {

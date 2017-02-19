@@ -33,19 +33,22 @@ public class VlcUtil {
      * @param movie selectred movie
      */
     public void launchVlc(final Activity c, final Movie movie) {
-        Uri uri = Uri.parse("file:///storage/emulated/0/Movies/KUNG FURY Official Movie.mp4");
-        Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
+        //Uri uri = Uri.parse("file:///storage/emulated/0/Movies/KUNG FURY Official Movie.mp4");
+        final Uri uri = Uri.parse(movie.getVideoUrl());
+        final Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
         vlcIntent.setComponent(new ComponentName(VLC_PKG_NAME, VLC_VIDEO_ACTIVITY));
         //vlcIntent.setPackage(VLC_PKG_NAME);
         vlcIntent.setDataAndTypeAndNormalize(uri, "video/*");
         vlcIntent.putExtra("title", movie.getTitle());
-        //vlcIntent.putExtra("from_start", false);
-        //vlcIntent.putExtra("position", 90000l);
+        if (movie.getPosition()>0) {
+            vlcIntent.putExtra("from_start", false);
+            vlcIntent.putExtra("position", movie.getPosition());// msec?
+        }
         //vlcIntent.putExtra("subtitles_location", "/sdcard/Movies/Fifty-Fifty.srt");
         c.startActivityForResult(vlcIntent, VLC_REQUEST_CODE);
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         if (VLC_REQUEST_CODE == requestCode) {
 
             // TODO check result code

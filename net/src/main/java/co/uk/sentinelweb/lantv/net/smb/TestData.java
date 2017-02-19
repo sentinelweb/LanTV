@@ -5,9 +5,9 @@ package co.uk.sentinelweb.lantv.net.smb;
  */
 
 public class TestData {
-    public static final String IP_ADDR = "192.168.0.13";
-    public static final String USER = "robert";
-    public static final String PASS = "satori";
+    public static final String IP_ADDR = "192.168.0.xx";
+    public static final String USER = "xxxx";
+    public static final String PASS = "xxxx";
     public static final String SHARE = "Drobo";
     public static final String PATH = "video/movies/";
 

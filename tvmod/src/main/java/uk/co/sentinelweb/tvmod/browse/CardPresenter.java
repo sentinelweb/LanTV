@@ -14,16 +14,22 @@
 
 package uk.co.sentinelweb.tvmod.browse;
 
+import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
-import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.R;
+import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.util.Extension;
 
 /*
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
@@ -38,8 +44,8 @@ public class CardPresenter extends Presenter {
     private static int sDefaultBackgroundColor;
     private Drawable mDefaultCardImage;
 
-    private static void updateCardBackgroundColor(ImageCardView view, boolean selected) {
-        int color = selected ? sSelectedBackgroundColor : sDefaultBackgroundColor;
+    private static void updateCardBackgroundColor(final ImageCardView view, final boolean selected) {
+        final int color = selected ? sSelectedBackgroundColor : sDefaultBackgroundColor;
         // Both background colors should be set because the view's background is temporarily visible
         // during animations.
         view.setBackgroundColor(color);
@@ -47,21 +53,23 @@ public class CardPresenter extends Presenter {
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent) {
+    public ViewHolder onCreateViewHolder(final ViewGroup parent) {
         Log.d(TAG, "onCreateViewHolder");
 
         sDefaultBackgroundColor = parent.getResources().getColor(R.color.default_background);
         sSelectedBackgroundColor = parent.getResources().getColor(R.color.selected_background);
         mDefaultCardImage = parent.getResources().getDrawable(R.drawable.movie);
 
-        ImageCardView cardView = new ImageCardView(parent.getContext()) {
+        final ImageCardView cardView = new ImageCardView(parent.getContext()) {
             @Override
-            public void setSelected(boolean selected) {
+            public void setSelected(final boolean selected) {
                 updateCardBackgroundColor(this, selected);
                 super.setSelected(selected);
             }
         };
 
+
+        cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER);
         cardView.setFocusable(true);
         cardView.setFocusableInTouchMode(true);
         updateCardBackgroundColor(cardView, false);
@@ -69,27 +77,40 @@ public class CardPresenter extends Presenter {
     }
 
     @Override
-    public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
-        Movie movie = (Movie) item;
-        ImageCardView cardView = (ImageCardView) viewHolder.view;
+    public void onBindViewHolder(final Presenter.ViewHolder viewHolder, final Object item) {
+        final Movie movie = (Movie) item;
+        final ImageCardView cardView = (ImageCardView) viewHolder.view;
 
-        Log.d(TAG, "onBindViewHolder");
+        //Log.d(TAG, "onBindViewHolder");
+        cardView.setTitleText(movie.getTitle());
+        cardView.setContentText(movie.getExtension());
+        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
+
         if (movie.getCardImageUrl() != null) {
-            cardView.setTitleText(movie.getTitle());
-            cardView.setContentText(movie.getExtension());
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
+
             Glide.with(viewHolder.view.getContext())
                     .load(movie.getCardImageUrl())
                     .centerCrop()
                     .error(mDefaultCardImage)
                     .into(cardView.getMainImageView());
+
+        } else {
+            // load default icon (SVG)
+            @DrawableRes final int icon = Extension.getIcon(movie.getExtension());
+            final boolean supported = Extension.isSupported(movie.getExtension());
+            cardView.getMainImageView().setImageResource(icon);
+            @ColorRes final int tintColor = supported ? R.color.card_icon : R.color.card_icon_unsupported;
+            final ColorStateList colorStateList = ContextCompat.getColorStateList(cardView.getContext(), tintColor);
+            cardView.getMainImageView().setImageTintList(colorStateList);
+
+            // TODO load image where possible
         }
     }
 
     @Override
-    public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
-        Log.d(TAG, "onUnbindViewHolder");
-        ImageCardView cardView = (ImageCardView) viewHolder.view;
+    public void onUnbindViewHolder(final Presenter.ViewHolder viewHolder) {
+        //Log.d(TAG, "onUnbindViewHolder");
+        final ImageCardView cardView = (ImageCardView) viewHolder.view;
         // Remove references to images so that the garbage collector can free up memory
         cardView.setBadgeImage(null);
         cardView.setMainImage(null);

@@ -18,9 +18,10 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Leanback">
+        android:theme="@style/Theme.Leanback"
+        android:name=".LanTvApplication">
         <activity
-            android:name=".browse.MainActivity"
+            android:name=".browse.SmbBrowseActivity"
             android:banner="@drawable/app_icon_your_company"
             android:icon="@drawable/app_icon_your_company"
             android:label="@string/app_name"
@@ -37,6 +38,7 @@
         <activity android:name=".playback.PlaybackOverlayActivity"/>
         <activity android:name=".error.BrowseErrorActivity"/>
         <activity android:name=".exoplayer.ExoPlayerActivity"
+                  android:screenOrientation="userLandscape"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
                   android:launchMode="singleTop"
                   android:label="ExoPlayer"

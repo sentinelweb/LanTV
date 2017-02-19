@@ -14,9 +14,7 @@
 
 package uk.co.sentinelweb.tvmod.browse;
 
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,6 +22,7 @@ import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
+import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 import android.support.v17.leanback.widget.OnItemViewClickedListener;
@@ -31,9 +30,10 @@ import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
-import android.support.v7.app.AlertDialog;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -41,20 +41,17 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
-import java.io.File;
-import java.net.URI;
-
+import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
+import uk.co.sentinelweb.tvmod.C;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
 import uk.co.sentinelweb.tvmod.error.BrowseErrorActivity;
 import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
 import uk.co.sentinelweb.tvmod.model.Movie;
-import uk.co.sentinelweb.tvmod.util.FileUtils;
-import uk.co.sentinelweb.tvmod.util.SupportedMedia;
 import uk.co.sentinelweb.tvmod.util.VlcUtil;
 
-public class MainFragment extends BrowseFragment implements MainMvpContract.View {
+public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpContract.View {
     private static final String TAG = "MainFragment";
 
 //    private static final int GRID_ITEM_WIDTH = 200;
@@ -63,16 +60,16 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     private ArrayObjectAdapter mRowsAdapter;
     private Drawable mDefaultBackground;
     private DisplayMetrics mMetrics;
-    private URI mBackgroundURI;
+    private Uri mBackgroundURI;
     private BackgroundManager mBackgroundManager;
 
-    MainMvpContract.Presenter presenter;
+    SmbBrowseMvpContract.Presenter presenter;
     private CardPresenter _cardPresenter;
 
     private final VlcUtil _vlcUtil;
-    private AlertDialog downloadDialog;
+    SmbBrowseFragmentModel model = null;
 
-    public MainFragment() {
+    public SmbBrowseFragment() {
         _vlcUtil = new VlcUtil();
     }
 
@@ -80,7 +77,11 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     public void onActivityCreated(final Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
-
+        SmbLocation location = (SmbLocation) getActivity().getIntent().getSerializableExtra(DetailsActivity.LOCATION);
+        if (location == null) {
+            location = C.TEST_LOCATION;
+        }
+        presenter.setupData(location);
 
         prepareBackgroundManager();
 
@@ -92,7 +93,6 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     @Override
     public void onStart() {
         super.onStart();
-
     }
 
     @Override
@@ -104,7 +104,9 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     @Override
     public void onResume() {
         super.onResume();
-        presenter.subscribe();
+        if (model == null) {
+            presenter.subscribe();
+        }
     }
 
     @Override
@@ -115,17 +117,20 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
 
     @Override
     public void onDestroy() {
+        selectedImageViewForTransition = null;
         super.onDestroy();
     }
 
     @Override
-    public void setData(final MainFragmentModel model) {
+    public void setData(final SmbBrowseFragmentModel model) {
         final boolean create = mRowsAdapter == null;
+        setTitle(model.getTitle());
+        this.model = model;
         if (create) {
             mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
             _cardPresenter = new CardPresenter();
             int i = 0;
-            for (final Category category : model._categories) {
+            for (final Category category : model.getCategories()) {
                 addRow(category, i++);
             }
             //Log.d(getClass().getSimpleName(),"movies:"+list.size());
@@ -153,25 +158,27 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
         mRowsAdapter.add(new ListRow(header, listRowAdapter));
     }
 
-    private void updateAdapter(final MainFragmentModel model) {
+    private void updateAdapter(final SmbBrowseFragmentModel model) {
         int categoryNumber = 0;
-        for (final Category category : model._categories) {
+        for (final Category category : model.getCategories()) {
             final ArrayObjectAdapter listRowAdapter;
             if (categoryNumber < mRowsAdapter.size()) {
                 listRowAdapter = (ArrayObjectAdapter) ((ListRow) mRowsAdapter.get(categoryNumber)).getAdapter();
                 int j = 0;
-                for (final Movie m : category.movies()) {
-                    if (j < listRowAdapter.size()) {
-                        listRowAdapter.replace(j, m);
-                    } else {
-                        listRowAdapter.add(m);
+                if (listRowAdapter.size()!=category.movies().size()) {
+                    for (final Movie m : category.movies()) {
+                        if (j < listRowAdapter.size()) {
+                            listRowAdapter.replace(j, m);
+                        } else {
+                            listRowAdapter.add(m);
+                        }
+                        j++;
                     }
-                    j++;
+                    if (j < listRowAdapter.size()) {
+                        listRowAdapter.removeItems(j, listRowAdapter.size());
+                    }
+                    listRowAdapter.notifyArrayItemRangeChanged(0, listRowAdapter.size());
                 }
-                if (j < listRowAdapter.size()) {
-                    listRowAdapter.removeItems(j, listRowAdapter.size());
-                }
-                listRowAdapter.notifyArrayItemRangeChanged(0, listRowAdapter.size());
             } else {
                 addRow(category, categoryNumber);
             }
@@ -189,7 +196,7 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     }
 
     private void setupUIElements() {
-        setTitle(getString(R.string.browse_title)); // Badge, when set, takes precedent
+        //setTitle(getString(R.string.browse_title)); // Badge, when set, takes precedent
         // over title
         setHeadersState(HEADERS_ENABLED);
         setHeadersTransitionOnBackEnabled(true);
@@ -229,75 +236,74 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
     }
 
     @Override
-    public void setPresenter(final MainMvpContract.Presenter presenter) {
+    public void setPresenter(final SmbBrowseMvpContract.Presenter presenter) {
         this.presenter = presenter;
-    }
-
-    /**
-     * <a href="https://wiki.videolan.org/Android_Player_Intents/">VLC android intents</a>
-     *
-     * @param movie
-     */
-    @Override
-    public void launchVlc(final Movie movie) {
-        _vlcUtil.launchVlc(getActivity(), movie);
     }
 
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        _vlcUtil.onActivityResult(requestCode, resultCode, data);
+        //_vlcUtil.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
-    public void launchExoplayer(Movie movie) {
+    public void launchExoplayer(final Movie movie) {
+        if (selectedImageViewForTransition != null) {
+            selectedImageViewForTransition = null;
+        }
         final Intent intent = new Intent(getActivity(), ExoPlayerActivity.class);
         intent.putExtra(DetailsActivity.MOVIE, movie);
         getActivity().startActivity(intent, null);
     }
 
     @Override
-    public void showDownloadDialog() {
-        downloadDialog = new AlertDialog.Builder(getActivity(), R.style.Theme_Leanback)
-                .setTitle("Downloading")
-                .setMessage("Downloading ...")
-                .create();
-        downloadDialog.show();
-    }
-
-    @Override
-    public void updateDownloadDialog(final String message) {
-        if (downloadDialog != null) {
-            downloadDialog.setMessage(message);
-        }
-    }
-
-    @Override
-    public void closeDownloadDialog() {
-        if (downloadDialog != null) {
-            downloadDialog.dismiss();
-        }
-    }
-
-    @Override
-    public File getBufferFile(Movie movie) {
-        return FileUtils.getBufferFile(getActivity(), movie.getVideoUrl());
-    }
-
-    @Override
-    public void showError(Throwable error) {
+    public void showError(final Throwable error) {
         showError(error.getMessage() + "(" + error.getClass().getSimpleName() + ")");
     }
 
     @Override
-    public void showError(String item) {
+    public void showError(final String item) {
         if (item.indexOf(getString(R.string.error_fragment)) >= 0) {
-            final Intent intent = new Intent(getActivity(), BrowseErrorActivity.class);
-            startActivity(intent);
+            startActivity(BrowseErrorActivity.getLaunchIntent(getActivity()));
         } else {
-            Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT)
-                    .show();
+            Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    ImageView selectedImageViewForTransition = null;
+
+    @Override
+    public void launchDetails(final SmbLocation location, final Movie movie) {
+        // scene transition to details
+        final Intent intent = new Intent(getActivity(), DetailsActivity.class);
+        intent.putExtra(DetailsActivity.MOVIE, movie);
+        intent.putExtra(DetailsActivity.LOCATION, location);
+
+        if (selectedImageViewForTransition != null) {
+            final Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(),
+                    selectedImageViewForTransition,
+                    DetailsActivity.SHARED_ELEMENT_NAME).toBundle();
+            selectedImageViewForTransition = null;
+            getActivity().startActivity(intent, bundle);
+        } else {
+            getActivity().startActivity(intent);
+        }
+
+    }
+
+    @Override
+    public void launchBrowser(final SmbLocation dir) {
+        getActivity().startActivity(SmbBrowseActivity.getIntent(getActivity(), dir));
+    }
+
+    @Override
+    public void launchVlc(final Movie movie) {
+        _vlcUtil.launchVlc(getActivity(), movie);
+    }
+
+    @Override
+    public void finish() {
+        getActivity().finish();
     }
 
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
@@ -305,7 +311,13 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
         public void onItemSelected(final Presenter.ViewHolder itemViewHolder, final Object item,
                                    final RowPresenter.ViewHolder rowViewHolder, final Row row) {
             if (item instanceof Movie) {
-                mBackgroundURI = ((Movie) item).getBackgroundImageURI();
+                final Movie movie = (Movie) item;
+//                if (movie==MovieList.PARENT_DIR_MOVIE) {
+//                    presenter.launchMovie((Movie) item);
+//                }
+                if (movie.getBackgroundImageURI() != null) {
+                    mBackgroundURI = movie.getBackgroundImageURI();
+                }
             }
         }
     }
@@ -315,6 +327,7 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
         public void onItemClicked(final Presenter.ViewHolder itemViewHolder, final Object item,
                                   final RowPresenter.ViewHolder rowViewHolder, final Row row) {
             if (item instanceof Movie) {
+                selectedImageViewForTransition = ((ImageCardView) itemViewHolder.view).getMainImageView();
                 presenter.launchMovie((Movie) item);
             } else if (item instanceof String) {
                 showError((String) item);
@@ -322,18 +335,45 @@ public class MainFragment extends BrowseFragment implements MainMvpContract.View
         }
     }
 
+//    /**
+//     * <a href="https://wiki.videolan.org/Android_Player_Intents/">VLC android intents</a>
+//     *
+//     * @param movie
+//     */
+//    @Override
+//    public void launchVlc(final Movie movie) {
+//        _vlcUtil.launchVlc(getActivity(), movie);
+//    }
 
 
-
-// scene transition to details
-//                final Intent intent = new Intent(getActivity(), DetailsActivity.class);
-//                intent.putExtra(DetailsActivity.MOVIE, movie);
+//    @Override
+//    public void showDownloadDialog() {
+//        downloadDialog = new AlertDialog.Builder(getActivity())
+//                .setTitle("Downloading")
+//                .setMessage("Downloading ...")
+//                .create();
+//        downloadDialog.show();
+//    }
 //
-//                final Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-//                        getActivity(),
-//                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
-//                        DetailsActivity.SHARED_ELEMENT_NAME).toBundle();
-//                getActivity().startActivity(intent, bundle);
+//    @Override
+//    public void updateDownloadDialog(final String message) {
+//        if (downloadDialog != null) {
+//            downloadDialog.setMessage(message);
+//        }
+//    }
+//
+//    @Override
+//    public void closeDownloadDialog() {
+//        if (downloadDialog != null) {
+//            downloadDialog.dismiss();
+//        }
+//    }
+//
+//    @Override
+//    public File getBufferFile(final Movie movie) {
+//        return FileUtils.getBufferFile(getActivity(), movie.getVideoUrl());
+//    }
+
 
 //    private class GridItemPresenter extends Presenter {
 //        @Override

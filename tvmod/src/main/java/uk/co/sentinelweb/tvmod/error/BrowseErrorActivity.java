@@ -15,8 +15,11 @@ package uk.co.sentinelweb.tvmod.error;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,9 +33,14 @@ import uk.co.sentinelweb.tvmod.R;
  * BrowseErrorActivity shows how to use ErrorFragment
  */
 public class BrowseErrorActivity extends Activity {
-    private static int TIMER_DELAY = 3000;
-    private static int SPINNER_WIDTH = 100;
-    private static int SPINNER_HEIGHT = 100;
+    private static final int TIMER_DELAY = 3000;
+    private static final int SPINNER_WIDTH = 100;
+    private static final int SPINNER_HEIGHT = 100;
+
+    @NonNull
+    public static Intent getLaunchIntent(final Context c) {
+        return new Intent(c, BrowseErrorActivity.class);
+    }
 
     private ErrorFragment mErrorFragment;
     private SpinnerFragment mSpinnerFragment;
@@ -41,7 +49,7 @@ public class BrowseErrorActivity extends Activity {
      * Called when the activity is first created.
      */
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -67,11 +75,11 @@ public class BrowseErrorActivity extends Activity {
 
     static public class SpinnerFragment extends Fragment {
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            ProgressBar progressBar = new ProgressBar(container.getContext());
+        public View onCreateView(final LayoutInflater inflater, final ViewGroup container,
+                                 final Bundle savedInstanceState) {
+            final ProgressBar progressBar = new ProgressBar(container.getContext());
             if (container instanceof FrameLayout) {
-                FrameLayout.LayoutParams layoutParams =
+                final FrameLayout.LayoutParams layoutParams =
                         new FrameLayout.LayoutParams(SPINNER_WIDTH, SPINNER_HEIGHT, Gravity.CENTER);
                 progressBar.setLayoutParams(layoutParams);
             }

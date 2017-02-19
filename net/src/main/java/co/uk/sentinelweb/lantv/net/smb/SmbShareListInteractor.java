@@ -6,31 +6,39 @@ import java.util.Date;
 import java.util.List;
 
 import co.uk.sentinelweb.lantv.domain.Media;
+import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
+import co.uk.sentinelweb.lantv.net.smb.url.SmbUrlBuilder;
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
 import rx.Observable;
-import rx.functions.Func0;
 
 public class SmbShareListInteractor {
 
     public Observable<List<Media>> getListObservable(final String ipAddr, final String shareName, final String dirname, final String username, final String password) {
-        return Observable.defer(new Func0<Observable<List<Media>>>() {
-            @Override
-            public Observable<List<Media>> call() {
-                return Observable.just(getList(ipAddr, shareName, dirname, username, password));
-            }
-        });
+        return Observable.defer(() -> Observable.just(getList(new SmbLocation(ipAddr, shareName, dirname, null, username, password))));
+    }
+
+    public Observable<List<Media>> getListObservable(final SmbLocation location) {
+        return Observable.defer(() -> Observable.just(getList(location)));
     }
 
     public List<Media> getList(final String ipAddr, final String shareName, final String dirname, final String username, final String password) {
-        jcifs.Config.setProperty("jcifs.smb.client.username", username);
-        jcifs.Config.setProperty("jcifs.smb.client.password", password);
+        return getList(new SmbLocation(ipAddr, shareName, dirname, null, username, password));
+    }
+
+    public List<Media> getList(final SmbLocation location) {
+//        jcifs.Config.setProperty("jcifs.smb.client.username", username);
+//        jcifs.Config.setProperty("jcifs.smb.client.password", password);
+
+        //final String url = buildUrl(ipAddr, shareName, dirname, username, password);
+        final String url = SmbUrlBuilder.build(location);
+        return getList(url);
+    }
+
+    public List<Media> getList(final String url) {
         final SmbFile parent;
         SmbFile[] files = new SmbFile[0];
 
-        final String url = "smb://" + ipAddr + "/" +
-                shareName + "/" +
-                dirname + (!dirname.endsWith("/") ? "/" : "");
         final List<Media> list = new ArrayList<>();
         try {
 
@@ -62,7 +70,7 @@ public class SmbShareListInteractor {
                     e.printStackTrace();
                 }
             }
-            System.out.println("Samba: files:" + fileCount+" dirs:"+directoryCount+" total"+files.length + " files in " + t2 + "ms");
+            System.out.println("Samba: files:" + fileCount + " dirs:" + directoryCount + " total" + files.length + " files in " + t2 + "ms");
         } catch (final MalformedURLException e) {
             System.out.println("Samba: badurl" + url);
             e.printStackTrace();
