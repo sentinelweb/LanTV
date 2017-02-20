@@ -12,10 +12,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import rx.subjects.PublishSubject;
+
 /**
  * Utilities for handling files
  */
 public final class FileUtils {
+
+    public static final String BUFFER_DIRECTORY = "buffer";
+    public static final int MB = (1024 * 1024);
+
     private FileUtils() {
     }
 
@@ -30,34 +36,61 @@ public final class FileUtils {
         return ext;
     }
 
+    public static final long RESULT_NO_FILE = -1l;
+
+    public static long checkBufferFile(final Context c, final String inputName) {
+        final File bufferFile = getBufferFile(c, inputName);
+        if (bufferFile.exists()) {
+            return bufferFile.length();
+        } else {
+            return RESULT_NO_FILE;
+        }
+    }
+
+    public static void clearBufferedFile(final Context c) {
+        final File bufferDir = c.getExternalFilesDir(BUFFER_DIRECTORY);
+        if (bufferDir.exists()) {
+            for (final File f : bufferDir.listFiles()) {
+                f.delete();
+            }
+        }
+    }
+
     public static File getBufferFile(final Context c, final String inputName) {
-        final File targetParent = c.getExternalFilesDir(Environment.DIRECTORY_MOVIES);
+        final File targetParent = c.getExternalFilesDir(BUFFER_DIRECTORY);
         if (!targetParent.exists()) {
             targetParent.mkdirs();
         }
-        return new File(targetParent, "buffer." + getExt(inputName));
+        return new File(targetParent, inputName);
     }
 
     public static long toMb(final long bytes) {
-        return bytes/1024/1024;
+        return bytes / MB;
     }
 
     /**
      * Generic copy logic to write local file from stream
+     *
      * @param target
      * @param inputStream
      */
-    public static void copyFileFromStream(final File target, final InputStream inputStream) {
+    public static void copyFileFromStream(final File target, final InputStream inputStream, final PublishSubject<Long> progressObservable) {
         OutputStream out = null;
         try {
             out = new FileOutputStream(target);
             final byte[] buffer = new byte[1000000];
-            int count = 0;
+            long count = 0;
             int read = -1;
+            long lastPublish = -1;
             while ((read = inputStream.read(buffer)) > -1) {
                 out.write(buffer, 0, read);
-                count+=read;
-                Log.d(FileUtils.class.getSimpleName(), "read:"+toMb(count));
+                count += read;
+                Log.d(FileUtils.class.getSimpleName(), "read:" + toMb(count));
+
+                if (progressObservable != null && count > lastPublish + MB) {
+                    progressObservable.onNext(count);
+                    lastPublish = count;
+                }
             }
             out.flush();
         } catch (final IOException e) {
@@ -72,7 +105,7 @@ public final class FileUtils {
         InputStream in = null;
         try {
             in = c.getAssets().open(fileName);
-            copyFileFromStream(target, in);
+            copyFileFromStream(target, in, null);
         } catch (final IOException e) {
             e.printStackTrace();
         } finally {
@@ -92,6 +125,7 @@ public final class FileUtils {
 
     /**
      * Free space in Mb
+     *
      * @return
      */
     public static long getFreeSpace() {
@@ -101,8 +135,6 @@ public final class FileUtils {
         final double mbAvailable = sdAvailSize / 1024 / 1024;
         return (long) mbAvailable;
     }
-
-
 
 
 }

@@ -204,7 +204,9 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
                 view.launchExoplayer(movie);
             } else {
                 //view.launchDetails(getLocationForSelectedMovie(movie), movie);
-                view.launchVlc(movie);
+                //view.launchVlc(movie);
+                view.launchMxPlayer(movie);
+
             }
         }
     }

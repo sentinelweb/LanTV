@@ -43,6 +43,7 @@ public class MovieMapper {
                     media.url(),
                     null,// TODO get image from somewhere
                     null//MovieList.TEST_BG_IMAGE//"http://www.freegreatpicture.com/files/147/14928-high-resolution-color-background.jpg"
+
             );
         } else {
             return null;
@@ -50,8 +51,8 @@ public class MovieMapper {
     }
 
     public static Movie buildMovieInfo(final String category, final String title,
-                                        final String description, final String extension, final String videoUrl, final String cardImageUrl,
-                                        final String bgImageUrl) {
+                                       final String description, final String extension, final String videoUrl, final String cardImageUrl,
+                                       final String bgImageUrl) {
         final Movie movie = new Movie();
         movie.setTitle(title);
         movie.setDescription(description);

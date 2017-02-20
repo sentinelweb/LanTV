@@ -41,6 +41,7 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
+import co.uk.sentinelweb.lantv.net.smb.SmbFileReadInteractor;
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import uk.co.sentinelweb.tvmod.C;
 import uk.co.sentinelweb.tvmod.R;
@@ -49,7 +50,9 @@ import uk.co.sentinelweb.tvmod.error.BrowseErrorActivity;
 import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
 import uk.co.sentinelweb.tvmod.model.Movie;
-import uk.co.sentinelweb.tvmod.util.VlcUtil;
+import uk.co.sentinelweb.tvmod.util.CacheFileController;
+import uk.co.sentinelweb.tvmod.util.MxPlayerController;
+import uk.co.sentinelweb.tvmod.util.VlcController;
 
 public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpContract.View {
     private static final String TAG = "MainFragment";
@@ -66,11 +69,13 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
     SmbBrowseMvpContract.Presenter presenter;
     private CardPresenter _cardPresenter;
 
-    private final VlcUtil _vlcUtil;
+    private final VlcController _vlcController;
+    private final MxPlayerController _mxController;
     SmbBrowseFragmentModel model = null;
 
     public SmbBrowseFragment() {
-        _vlcUtil = new VlcUtil();
+        _vlcController = new VlcController();
+        _mxController = new MxPlayerController(new CacheFileController(new SmbFileReadInteractor()));
     }
 
     @Override
@@ -298,7 +303,12 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
 
     @Override
     public void launchVlc(final Movie movie) {
-        _vlcUtil.launchVlc(getActivity(), movie);
+        _vlcController.launchVlc(getActivity(), movie);
+    }
+
+    @Override
+    public void launchMxPlayer(final Movie movie) {
+        _mxController.launchMxPlayer(getActivity(), movie);
     }
 
     @Override

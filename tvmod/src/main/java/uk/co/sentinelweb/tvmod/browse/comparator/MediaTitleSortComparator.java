@@ -14,7 +14,7 @@ public class MediaTitleSortComparator implements Comparator<Media>{
 
     @Override
     public int compare(final Media o1, final Media o2) {
-        return o1.title().compareTo(o2.title());
+        return o1.title().toLowerCase().compareTo(o2.title().toLowerCase());
     }
 
     public List<Media> sort(final List<Media> medias) {

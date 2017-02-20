@@ -40,6 +40,8 @@ public interface SmbBrowseMvpContract {
 
         void launchVlc(Movie movie);
 
+        void launchMxPlayer(Movie movie);
+
         void finish();
     }
 

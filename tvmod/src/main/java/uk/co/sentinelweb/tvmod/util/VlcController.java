@@ -10,14 +10,14 @@ import uk.co.sentinelweb.tvmod.model.Movie;
 /**
  * Created by robertm on 17/02/2017.
  */
-public class VlcUtil {
+public class VlcController {
 
     private static final String VLC_PKG_NAME = "org.videolan.vlc";
     private static final String VLC_VIDEO_ACTIVITY = "org.videolan.vlc.gui.video.VideoPlayerActivity";
 
-    private static final int VLC_REQUEST_CODE = 42;
-    private static final String EXTRA_POSITION = "extra_position";
-    private static final String EXTRA_DURATION = "extra_duration";
+    private static final int REQUEST_CODE = 42;
+    private static final String EXTRA_POSITION_OUT = "extra_position";
+    private static final String EXTRA_DURATION_OUT = "extra_duration";
 
     private static final int RESULT_OK = -1; //	Video finished or user ended playback
     private static final int RESULT_CANCELED = 0; //	No compatible cpu, incorrect VLC abi variant installed
@@ -25,6 +25,10 @@ public class VlcUtil {
     private static final int RESULT_PLAYBACK_ERROR = 3; //	VLC is not able to play this file, it could be incorrect path/uri, not supported codec or broken file
     private static final int RESULT_HARDWARE_ACCELERATION_ERROR = 4; //	Error with hardware acceleration, user refused to switch to software decoding
     private static final int RESULT_VIDEO_TRACK_LOST = 5; //
+    public static final String EXTRA_TITLE = "title";
+    public static final String EXTRA_FROM_START = "from_start";
+    public static final String EXTRA_POSITION = "position";
+    public static final String VIDEO_MIMETYPE = "video/*";
 
     /**
      * <a href="https://wiki.videolan.org/Android_Player_Intents/">VLC android intents</a>
@@ -38,22 +42,22 @@ public class VlcUtil {
         final Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
         vlcIntent.setComponent(new ComponentName(VLC_PKG_NAME, VLC_VIDEO_ACTIVITY));
         //vlcIntent.setPackage(VLC_PKG_NAME);
-        vlcIntent.setDataAndTypeAndNormalize(uri, "video/*");
-        vlcIntent.putExtra("title", movie.getTitle());
+        vlcIntent.setDataAndTypeAndNormalize(uri, VIDEO_MIMETYPE);
+        vlcIntent.putExtra(EXTRA_TITLE, movie.getTitle());
         if (movie.getPosition()>0) {
-            vlcIntent.putExtra("from_start", false);
-            vlcIntent.putExtra("position", movie.getPosition());// msec?
+            vlcIntent.putExtra(EXTRA_FROM_START, false);
+            vlcIntent.putExtra(EXTRA_POSITION, movie.getPosition());// msec?
         }
         //vlcIntent.putExtra("subtitles_location", "/sdcard/Movies/Fifty-Fifty.srt");
-        c.startActivityForResult(vlcIntent, VLC_REQUEST_CODE);
+        c.startActivityForResult(vlcIntent, REQUEST_CODE);
     }
 
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        if (VLC_REQUEST_CODE == requestCode) {
+        if (REQUEST_CODE == requestCode) {
 
             // TODO check result code
-            data.getLongExtra(EXTRA_POSITION, -1); //Last position in media when player exited
-            data.getLongExtra(EXTRA_DURATION, -1); //	long	Total duration of the media
+            data.getLongExtra(EXTRA_POSITION_OUT, -1); //Last position in media when player exited
+            data.getLongExtra(EXTRA_DURATION_OUT, -1); //	long	Total duration of the media
 
 
         }

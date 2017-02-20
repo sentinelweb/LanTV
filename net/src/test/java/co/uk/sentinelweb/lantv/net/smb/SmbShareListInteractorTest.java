@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.util.List;
 
 import co.uk.sentinelweb.lantv.domain.Media;
+import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 
 /**
  * Created by robert on 12/02/2017.
@@ -47,6 +48,13 @@ public class SmbShareListInteractorTest {
                 System.out.println(m.toString());
             }
         }
+    }
+
+    @Test
+    public void getFileData() throws Exception {
+        final SmbLocation location = new SmbLocation("192.168.0.13", "Drobo", "video/movies/superhero/", "dark_knight.iso.mp4",TestData.USER, TestData.PASS);//
+        final Media m = new SmbShareListInteractor().getMedia(location );
+        System.out.println(m.toString());
     }
 
 }
