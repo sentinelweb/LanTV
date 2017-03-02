@@ -110,7 +110,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         mItems = new ArrayList<>();
         mSelectedMovie = (Movie) getActivity()
                 .getIntent().getSerializableExtra(DetailsActivity.MOVIE);
-
+        mItems.add(mSelectedMovie);
         _subscribe = Observable.<List<Movie>>empty()
 //                MovieList.setupMovies()
 //                .subscribeOn(Schedulers.io())
@@ -217,14 +217,12 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         if (playPause) {
             startProgressAutomation();
             setFadingEnabled(true);
-            mCallback.onFragmentPlayPause(mItems.get(mCurrentItem),
-                    mPlaybackControlsRow.getCurrentTime(), true);
+            mCallback.onFragmentPlayPause(mItems.get(mCurrentItem), mPlaybackControlsRow.getCurrentTime(), true);
             mPlayPauseAction.setIcon(mPlayPauseAction.getDrawable(PlayPauseAction.PAUSE));
         } else {
             stopProgressAutomation();
             setFadingEnabled(false);
-            mCallback.onFragmentPlayPause(mItems.get(mCurrentItem),
-                    mPlaybackControlsRow.getCurrentTime(), false);
+            mCallback.onFragmentPlayPause(mItems.get(mCurrentItem), mPlaybackControlsRow.getCurrentTime(), false);
             mPlayPauseAction.setIcon(mPlayPauseAction.getDrawable(PlayPauseAction.PLAY));
         }
         notifyChanged(mPlayPauseAction);
@@ -311,11 +309,15 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
     private void updatePlaybackRow(final int index) {
         if (mPlaybackControlsRow.getItem() != null) {
             final Movie item = (Movie) mPlaybackControlsRow.getItem();
-            item.setTitle(mItems.get(mCurrentItem).getTitle());
-            item.setExtension(mItems.get(mCurrentItem).getExtension());
+            if (mItems.size()<mCurrentItem) {
+                item.setTitle(mItems.get(mCurrentItem).getTitle());
+                item.setExtension(mItems.get(mCurrentItem).getExtension());
+            }
         }
         if (SHOW_IMAGE) {
-            updateVideoImage(mItems.get(mCurrentItem).getCardImageURI().toString());
+            if (mItems.size()<mCurrentItem) {
+                updateVideoImage(mItems.get(mCurrentItem).getCardImageURI().toString());
+            }
         }
         mRowsAdapter.notifyArrayItemRangeChanged(0, 1);
         mPlaybackControlsRow.setTotalTime(getDuration());

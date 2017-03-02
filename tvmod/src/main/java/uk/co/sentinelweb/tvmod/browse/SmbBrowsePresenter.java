@@ -121,11 +121,12 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
             final Movie movie = _movieMapper.map(largestMediaFile);
             if (movie != null) {
                 launchMovie(movie);
-                view.finish();
+                view.finishActivity();
             }
         } else {
             // load the list
             addToMovieListObservable(Observable.just(topLevelList))
+                    .subscribeOn(Schedulers.io())
                     .subscribe((model) -> view.setData(model),
                             (throwable) -> Log.d(SmbBrowsePresenter.class.getSimpleName(), "Load error:", throwable),
                             () -> {});
@@ -160,6 +161,7 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
     @NonNull
     private Observable<SmbBrowseFragmentModel> addToMovieListObservable(final Observable<List<Media>> listObservable) {
         return listObservable
+                .observeOn(Schedulers.io())// on bg thread
                 .map((medias) -> _movieMapper.mapList(medias))// map media -> movie
                 .filter((movies) -> movies.size() > 0)// remove empties
                 .map((list) -> _categoryMapper.map(list.get(0).getCategory(), list)) // make category
@@ -198,17 +200,26 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
             } else if (C.CURRENT_DIR_TITLE.equals(movie.getTitle())) {
                 view.launchBrowser(new SmbLocationParser().parse(movie.getVideoUrl()));
             } else if (movie.getExtension().equals(C.DIR_EXTENSION)) {
-                final SmbLocation newLocation = new SmbLocationParser().parse(movie.getVideoUrl());
-                view.launchBrowser(newLocation);
+                loadDirectory(movie);
             } else if (Extension.isSupported(movie.getExtension())) {
                 view.launchExoplayer(movie);
             } else {
                 //view.launchDetails(getLocationForSelectedMovie(movie), movie);
                 //view.launchVlc(movie);
                 view.launchMxPlayer(movie);
-
             }
         }
+    }
+
+    @Override
+    public void loadDirectory(final Movie movie) {
+        final SmbLocation newLocation = new SmbLocationParser().parse(movie.getVideoUrl());
+        view.launchBrowser(newLocation);
+    }
+
+    @Override
+    public void launchDetails(final Movie m) {
+        view.launchDetails(getLocationForSelectedMovie(m), m);
     }
 
     private SmbLocation getLocationForSelectedMovie(final Movie movie) {

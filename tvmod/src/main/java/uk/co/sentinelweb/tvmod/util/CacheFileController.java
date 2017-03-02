@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.File;
+import java.io.InputStream;
 
 import co.uk.sentinelweb.lantv.net.smb.SmbFileReadInteractor;
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
@@ -21,6 +22,7 @@ public class CacheFileController {
     SmbFileReadInteractor _smbFileReadInteractor;
     //SmbShareListInteractor _smbShareListInteractor;
     private Subscription _subscription;
+    private InputStream _inputStream;
 
     public CacheFileController(final SmbFileReadInteractor smbFileReadInteractor
                                /*, final SmbShareListInteractor smbShareListInteractor*/) {
@@ -34,15 +36,17 @@ public class CacheFileController {
         final File bufferFile = FileUtils.getBufferFile(c, f.getFileName());
         _subscription =
                 _smbFileReadInteractor
-                .openFileObservable(f)
-                .observeOn(Schedulers.io())
-                .doOnNext(inputStream -> FileUtils.copyFileFromStream(bufferFile, inputStream, progressPublish))
-                .subscribeOn(Schedulers.io())
-                .subscribe((inputStream) -> {
-                        },
-                        (throwable) -> Log.d(TAG, "Error caching file:" + f.getFileName(), throwable),
-                        () -> {
-                        });
+                        .openFileObservable(f)
+                        .observeOn(Schedulers.io())
+                        .map((inputStream) -> this._inputStream = inputStream)
+                        .doOnNext(inputStream -> FileUtils.copyFileFromStream(bufferFile, inputStream, progressPublish))
+                        .doOnUnsubscribe(()->FileUtils.closeStream(_inputStream))
+                        .subscribeOn(Schedulers.io())
+                        .subscribe((inputStream) -> {
+                                },
+                                (throwable) -> Log.d(TAG, "Error caching file:" + f.getFileName(), throwable),
+                                () -> {
+                                });
         return progressPublish;
     }
 

@@ -19,11 +19,11 @@
     <string name="grid_view">Grid View</string>
     <string name="error_fragment">Error Fragment</string>
     <string name="personal_settings">Personal Settings</string>
-    <string name="watch_trailer_1">Watch trailer</string>
+    <string name="play_vlc">VLC</string>
     <string name="watch_trailer_2">FREE</string>
-    <string name="rent_1">Rent By Day</string>
+    <string name="play_mx">MxPLayer</string>
     <string name="rent_2">From $1.99</string>
-    <string name="buy_1">Buy and Own</string>
+    <string name="download">Download</string>
     <string name="buy_2">AT $9.99</string>
     <string name="movie">Movie</string>
     <string name="should_start">shouldStart</string>
@@ -59,5 +59,7 @@
     <string name="error_unsupported_audio">Media includes audio tracks, but none are playable by this device</string>
     <string name="storage_permission_denied">Permission to access storage was denied</string>
     <string name="sample_list_load_error">One or more sample lists failed to load</string>
+    <string name="play_system">System Player</string>
+    <string name="play_exo">ExoPlayer</string>
 
 </resources>

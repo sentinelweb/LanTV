@@ -29,7 +29,7 @@ public class CategoryMovieRowItemTitleComparatorTest {
     }
 
     @Test
-    public void sortWithCurrrent() throws Exception {
+    public void sortWithCurrent() throws Exception {
         final Category category = buildCategory(Arrays.asList(new String[]{"a", null, "d","b", null,  "c", C.CURRENT_DIR_TITLE}));
 
         sut.sort(category);

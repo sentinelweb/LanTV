@@ -14,9 +14,13 @@ public interface DetailsMvpContract {
 
         void setData(DetailsFragmentModel model);
 
-        void launchVlc(Movie item);
+        void launchSystemPlayer();
 
-        void launchPlayer(Movie item);
+        void launchExoplayer();
+
+        void launchVlc();
+
+        void launchMxPlayer();
     }
 
 }

@@ -22,6 +22,7 @@ import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
@@ -43,6 +44,7 @@ public class CardPresenter extends Presenter {
     private static int sSelectedBackgroundColor;
     private static int sDefaultBackgroundColor;
     private Drawable mDefaultCardImage;
+    private OnLongClickListener longClickListener;
 
     private static void updateCardBackgroundColor(final ImageCardView view, final boolean selected) {
         final int color = selected ? sSelectedBackgroundColor : sDefaultBackgroundColor;
@@ -73,6 +75,14 @@ public class CardPresenter extends Presenter {
         cardView.setFocusable(true);
         cardView.setFocusableInTouchMode(true);
         updateCardBackgroundColor(cardView, false);
+        if (longClickListener!=null) {
+            cardView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(final View v) {
+                    return longClickListener.onLongClick((Movie)v.getTag());
+                }
+            });
+        }
         return new ViewHolder(cardView);
     }
 
@@ -85,7 +95,7 @@ public class CardPresenter extends Presenter {
         cardView.setTitleText(movie.getTitle());
         cardView.setContentText(movie.getExtension());
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
-
+        cardView.setTag(movie);
         if (movie.getCardImageUrl() != null) {
 
             Glide.with(viewHolder.view.getContext())
@@ -105,6 +115,7 @@ public class CardPresenter extends Presenter {
 
             // TODO load image where possible
         }
+
     }
 
     @Override
@@ -114,5 +125,13 @@ public class CardPresenter extends Presenter {
         // Remove references to images so that the garbage collector can free up memory
         cardView.setBadgeImage(null);
         cardView.setMainImage(null);
+    }
+
+    public void setLongClickListener(final OnLongClickListener longClickListener) {
+        this.longClickListener = longClickListener;
+    }
+
+    public interface OnLongClickListener {
+        public boolean onLongClick(Movie m);
     }
 }

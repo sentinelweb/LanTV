@@ -10,6 +10,10 @@ public interface SmbBrowseMvpContract {
         void setupData(SmbLocation location);
 
         void launchMovie(Movie item);
+
+        void loadDirectory(Movie movie);
+
+        void launchDetails(Movie m);
     }
 
     interface View extends BaseMvpContract.View<Presenter> {
@@ -42,7 +46,7 @@ public interface SmbBrowseMvpContract {
 
         void launchMxPlayer(Movie movie);
 
-        void finish();
+        void finishActivity();
     }
 
 }

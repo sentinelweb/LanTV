@@ -31,6 +31,7 @@ import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.ImageView;
@@ -57,21 +58,22 @@ import uk.co.sentinelweb.tvmod.util.VlcController;
 public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpContract.View {
     private static final String TAG = "MainFragment";
 
-//    private static final int GRID_ITEM_WIDTH = 200;
-//    private static final int GRID_ITEM_HEIGHT = 200;
-
-    private ArrayObjectAdapter mRowsAdapter;
-    private Drawable mDefaultBackground;
+    private ArrayObjectAdapter _rowsAdapter;
+    private Drawable _defaultBackground;
     private DisplayMetrics mMetrics;
-    private Uri mBackgroundURI;
-    private BackgroundManager mBackgroundManager;
+    private Uri _backgroundURI;
+    private BackgroundManager _backgroundManager;
 
-    SmbBrowseMvpContract.Presenter presenter;
+    private SmbBrowseMvpContract.Presenter _presenter;
     private CardPresenter _cardPresenter;
 
     private final VlcController _vlcController;
     private final MxPlayerController _mxController;
-    SmbBrowseFragmentModel model = null;
+
+    private ImageView _selectedImageViewForTransition = null;
+
+    private SmbBrowseFragmentModel _model = null;
+    private Movie _selectedMovie;
 
     public SmbBrowseFragment() {
         _vlcController = new VlcController();
@@ -86,7 +88,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         if (location == null) {
             location = C.TEST_LOCATION;
         }
-        presenter.setupData(location);
+        _presenter.setupData(location);
 
         prepareBackgroundManager();
 
@@ -109,31 +111,52 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
     @Override
     public void onResume() {
         super.onResume();
-        if (model == null) {
-            presenter.subscribe();
+        if (_model == null || _rowsAdapter == null || _rowsAdapter.size() == 0) {
+            _presenter.subscribe();
         }
+        //_mxController.stopDownload();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        presenter.unsubscribe();
+        _presenter.unsubscribe();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
     }
 
     @Override
     public void onDestroy() {
-        selectedImageViewForTransition = null;
+        _selectedImageViewForTransition = null;
+        _model = null;
+        _backgroundManager = null;
+        _rowsAdapter = null;
         super.onDestroy();
     }
 
     @Override
     public void setData(final SmbBrowseFragmentModel model) {
-        final boolean create = mRowsAdapter == null;
+        final boolean create = _rowsAdapter == null;
         setTitle(model.getTitle());
-        this.model = model;
+        this._model = model;
         if (create) {
-            mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+            _rowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
             _cardPresenter = new CardPresenter();
+            _cardPresenter.setLongClickListener(new CardPresenter.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(final Movie m) {
+                    if (C.DIR_EXTENSION.equals(m.getExtension())) {
+                        _presenter.loadDirectory(m);
+                    } else {
+                        _presenter.launchDetails(m);
+
+                    }
+                    return true;
+                }
+            });
             int i = 0;
             for (final Category category : model.getCategories()) {
                 addRow(category, i++);
@@ -141,14 +164,13 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
             //Log.d(getClass().getSimpleName(),"movies:"+list.size());
 
 //        final HeaderItem gridHeader = new HeaderItem(i, "PREFERENCES");
-
 //        final GridItemPresenter mGridPresenter = new GridItemPresenter();
 //        final ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
 //        gridRowAdapter.add(getResources().getString(R.string.grid_view));
 //        gridRowAdapter.add(getString(R.string.error_fragment));
 //        gridRowAdapter.add(getResources().getString(R.string.personal_settings));
-//        mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
-            setAdapter(mRowsAdapter);
+//        _rowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+            setAdapter(_rowsAdapter);
         } else {
             updateAdapter(model);
         }
@@ -160,17 +182,17 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
             listRowAdapter.add(m);
         }
         final HeaderItem header = new HeaderItem(index, category.name() + " (" + category.count() + ")");
-        mRowsAdapter.add(new ListRow(header, listRowAdapter));
+        _rowsAdapter.add(new ListRow(header, listRowAdapter));
     }
 
     private void updateAdapter(final SmbBrowseFragmentModel model) {
         int categoryNumber = 0;
         for (final Category category : model.getCategories()) {
             final ArrayObjectAdapter listRowAdapter;
-            if (categoryNumber < mRowsAdapter.size()) {
-                listRowAdapter = (ArrayObjectAdapter) ((ListRow) mRowsAdapter.get(categoryNumber)).getAdapter();
+            if (categoryNumber < _rowsAdapter.size()) {
+                listRowAdapter = (ArrayObjectAdapter) ((ListRow) _rowsAdapter.get(categoryNumber)).getAdapter();
                 int j = 0;
-                if (listRowAdapter.size()!=category.movies().size()) {
+                if (listRowAdapter.size() != category.movies().size()) {
                     for (final Movie m : category.movies()) {
                         if (j < listRowAdapter.size()) {
                             listRowAdapter.replace(j, m);
@@ -189,13 +211,13 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
             }
             categoryNumber++;
         }
-        mRowsAdapter.notifyArrayItemRangeChanged(0, mRowsAdapter.size());
+        _rowsAdapter.notifyArrayItemRangeChanged(0, _rowsAdapter.size());
     }
 
     private void prepareBackgroundManager() {
-        mBackgroundManager = BackgroundManager.getInstance(getActivity());
-        mBackgroundManager.attach(getActivity().getWindow());
-        mDefaultBackground = getResources().getDrawable(R.drawable.default_background);
+        _backgroundManager = BackgroundManager.getInstance(getActivity());
+        _backgroundManager.attach(getActivity().getWindow());
+        _defaultBackground = getResources().getDrawable(R.drawable.default_background);
         mMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
     }
@@ -207,54 +229,57 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         setHeadersTransitionOnBackEnabled(true);
 
         // set fastLane (or headers) background color
-        setBrandColor(getResources().getColor(R.color.fastlane_background));
+        setBrandColor(ContextCompat.getColor(getActivity(), R.color.fastlane_background));
         // set search icon color
-        setSearchAffordanceColor(getResources().getColor(R.color.search_opaque));
+        setSearchAffordanceColor(ContextCompat.getColor(getActivity(), R.color.search_opaque));
     }
 
     private void setupEventListeners() {
         setOnSearchClickedListener((view) -> Toast.makeText(getActivity(), "Implement your own in-app search", Toast.LENGTH_LONG).show());
         setOnItemViewClickedListener(new ItemViewClickedListener());
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
-
     }
 
     @Override
     public void updateBackGround() {
-        if (mBackgroundURI != null) {
+        if (_backgroundURI != null) {
             final int width = mMetrics.widthPixels;
             final int height = mMetrics.heightPixels;
             Glide.with(getActivity())
-                    .load(mBackgroundURI)
+                    .load(_backgroundURI)
                     .centerCrop()
-                    .error(mDefaultBackground)
+                    .error(_defaultBackground)
                     .into(new SimpleTarget<GlideDrawable>(width, height) {
                         @Override
                         public void onResourceReady(final GlideDrawable resource,
                                                     final GlideAnimation<? super GlideDrawable>
                                                             glideAnimation) {
-                            mBackgroundManager.setDrawable(resource);
+                            _backgroundManager.setDrawable(resource);
                         }
                     });
-            mBackgroundURI = null;
+            _backgroundURI = null;
         }
     }
 
     @Override
     public void setPresenter(final SmbBrowseMvpContract.Presenter presenter) {
-        this.presenter = presenter;
+        this._presenter = presenter;
     }
 
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        //_vlcUtil.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == VlcController.REQUEST_CODE) {
+            _vlcController.onActivityResult(requestCode, resultCode, data, _selectedMovie);
+        } else if (requestCode == MxPlayerController.REQUEST_CODE){
+            _mxController.onActivityResult(requestCode, resultCode, data, _selectedMovie);
+        }
     }
 
     @Override
     public void launchExoplayer(final Movie movie) {
-        if (selectedImageViewForTransition != null) {
-            selectedImageViewForTransition = null;
+        if (_selectedImageViewForTransition != null) {
+            _selectedImageViewForTransition = null;
         }
         final Intent intent = new Intent(getActivity(), ExoPlayerActivity.class);
         intent.putExtra(DetailsActivity.MOVIE, movie);
@@ -275,7 +300,6 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         }
     }
 
-    ImageView selectedImageViewForTransition = null;
 
     @Override
     public void launchDetails(final SmbLocation location, final Movie movie) {
@@ -284,11 +308,11 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         intent.putExtra(DetailsActivity.MOVIE, movie);
         intent.putExtra(DetailsActivity.LOCATION, location);
 
-        if (selectedImageViewForTransition != null) {
+        if (_selectedImageViewForTransition != null) {
             final Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(),
-                    selectedImageViewForTransition,
+                    _selectedImageViewForTransition,
                     DetailsActivity.SHARED_ELEMENT_NAME).toBundle();
-            selectedImageViewForTransition = null;
+            _selectedImageViewForTransition = null;
             getActivity().startActivity(intent, bundle);
         } else {
             getActivity().startActivity(intent);
@@ -303,6 +327,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
 
     @Override
     public void launchVlc(final Movie movie) {
+        _selectedMovie = movie;
         _vlcController.launchVlc(getActivity(), movie);
     }
 
@@ -312,7 +337,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
     }
 
     @Override
-    public void finish() {
+    public void finishActivity() {
         getActivity().finish();
     }
 
@@ -323,10 +348,10 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
             if (item instanceof Movie) {
                 final Movie movie = (Movie) item;
 //                if (movie==MovieList.PARENT_DIR_MOVIE) {
-//                    presenter.launchMovie((Movie) item);
+//                    _presenter.launchMovie((Movie) item);
 //                }
                 if (movie.getBackgroundImageURI() != null) {
-                    mBackgroundURI = movie.getBackgroundImageURI();
+                    _backgroundURI = movie.getBackgroundImageURI();
                 }
             }
         }
@@ -337,8 +362,8 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         public void onItemClicked(final Presenter.ViewHolder itemViewHolder, final Object item,
                                   final RowPresenter.ViewHolder rowViewHolder, final Row row) {
             if (item instanceof Movie) {
-                selectedImageViewForTransition = ((ImageCardView) itemViewHolder.view).getMainImageView();
-                presenter.launchMovie((Movie) item);
+                _selectedImageViewForTransition = ((ImageCardView) itemViewHolder.view).getMainImageView();
+                _presenter.launchMovie((Movie) item);
             } else if (item instanceof String) {
                 showError((String) item);
             }
@@ -384,6 +409,9 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
 //        return FileUtils.getBufferFile(getActivity(), movie.getVideoUrl());
 //    }
 
+
+//    private static final int GRID_ITEM_WIDTH = 200;
+//    private static final int GRID_ITEM_HEIGHT = 200;
 
 //    private class GridItemPresenter extends Presenter {
 //        @Override

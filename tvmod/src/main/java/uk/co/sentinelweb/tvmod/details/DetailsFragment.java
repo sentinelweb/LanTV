@@ -42,13 +42,20 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
+import co.uk.sentinelweb.lantv.net.smb.SmbFileReadInteractor;
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.browse.CardPresenter;
+import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
 import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.playback.PlaybackOverlayActivity;
+import uk.co.sentinelweb.tvmod.util.CacheFileController;
+import uk.co.sentinelweb.tvmod.util.Extension;
+import uk.co.sentinelweb.tvmod.util.FileUtils;
+import uk.co.sentinelweb.tvmod.util.MxPlayerController;
 import uk.co.sentinelweb.tvmod.util.Utils;
+import uk.co.sentinelweb.tvmod.util.VlcController;
 
 /*
  * LeanbackDetailsFragment extends DetailsFragment, a Wrapper fragment for leanback details screens.
@@ -57,13 +64,15 @@ import uk.co.sentinelweb.tvmod.util.Utils;
 public class DetailsFragment extends android.support.v17.leanback.app.DetailsFragment implements DetailsMvpContract.View {
     private static final String TAG = "VideoDetailsFragment";
 
-    private static final int ACTION_WATCH_TRAILER = 1;
-    private static final int ACTION_RENT = 2;
-    private static final int ACTION_BUY = 3;
+    private static final int ACTION_VLC = 1;
+    private static final int ACTION_MX = 2;
+    private static final int ACTION_DOWNLOAD = 3;
+    private static final int ACTION_SYSTEM = 4;
+    private static final int ACTION_EXO = 5;
+
 
     private static final int DETAIL_THUMB_WIDTH = 274;
     private static final int DETAIL_THUMB_HEIGHT = 274;
-
     //private Movie mSelectedMovie;
 
     private ArrayObjectAdapter mAdapter;
@@ -75,6 +84,15 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
     //private Subscription _subscribe;
     DetailsMvpContract.Presenter _presenter;
     DetailsFragmentModel _model;
+
+    private final VlcController _vlcController;
+    private final MxPlayerController _mxController;
+
+    public DetailsFragment() {
+        _vlcController = new VlcController();
+        _mxController = new MxPlayerController(new CacheFileController(new SmbFileReadInteractor()));
+    }
+
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         Log.d(TAG, "onCreate DetailsFragment");
@@ -99,7 +117,6 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
         setupDetailsOverviewRow();
         setupMovieListRowPresenter();
         updateBackground(_model.getMovie().getBackgroundImageUrl());
-
     }
 
     @Override
@@ -128,18 +145,6 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
         setupMovie();
         processList(model.getCategory());
     }
-
-    @Override
-    public void launchVlc(final Movie item) {
-
-    }
-
-    @Override
-    public void launchPlayer(final Movie item) {
-
-    }
-
-
 
     private void prepareBackgroundManager() {
         mBackgroundManager = BackgroundManager.getInstance(getActivity());
@@ -192,13 +197,21 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
                         mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size());
                     }
                 });
-
-        row.addAction(new Action(ACTION_WATCH_TRAILER, getResources().getString(
-                R.string.watch_trailer_1), getResources().getString(R.string.watch_trailer_2)));
-        row.addAction(new Action(ACTION_RENT, getResources().getString(R.string.rent_1),
-                getResources().getString(R.string.rent_2)));
-        row.addAction(new Action(ACTION_BUY, getResources().getString(R.string.buy_1),
-                getResources().getString(R.string.buy_2)));
+//        final MimeMap.MimeData mimeData = MimeMap.get(_model.getMovie().getVideoUrl());
+        final boolean supported = Extension.isSupported(FileUtils.getExt(_model.getMovie().getVideoUrl()));
+        if (supported) {
+            row.addAction(new Action(ACTION_SYSTEM, getResources().getString(
+                    R.string.play_system)/*, getResources().getString(R.string.watch_trailer_2)*/));
+            row.addAction(new Action(ACTION_EXO, getResources().getString(R.string.play_exo)/*,
+                getResources().getString(R.string.rent_2)*/));
+        } else {
+            row.addAction(new Action(ACTION_VLC, getResources().getString(
+                    R.string.play_vlc)/*, getResources().getString(R.string.watch_trailer_2)*/));
+            row.addAction(new Action(ACTION_MX, getResources().getString(R.string.play_mx)/*,
+                getResources().getString(R.string.rent_2)*/));
+            row.addAction(new Action(ACTION_DOWNLOAD, getResources().getString(R.string.download)/*,
+                getResources().getString(R.string.buy_2)*/));
+        }
         mAdapter.add(row);
     }
 
@@ -216,10 +229,14 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
         detailsPresenter.setOnActionClickedListener(new OnActionClickedListener() {
             @Override
             public void onActionClicked(final Action action) {
-                if (action.getId() == ACTION_WATCH_TRAILER) {
-                    final Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-                    intent.putExtra(DetailsActivity.MOVIE, _model.getMovie());
-                    startActivity(intent);
+                if (action.getId() == ACTION_VLC) {
+                    launchVlc();
+                } else if (action.getId() == ACTION_MX) {
+                    launchMxPlayer();
+                } else if (action.getId() == ACTION_SYSTEM) {
+                    launchSystemPlayer();
+                } else if (action.getId() == ACTION_EXO) {
+                    launchExoplayer();
                 } else {
                     Toast.makeText(getActivity(), action.toString(), Toast.LENGTH_SHORT).show();
                 }
@@ -227,6 +244,33 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
         });
         mPresenterSelector.addClassPresenter(DetailsOverviewRow.class, detailsPresenter);
     }
+
+    @Override
+    public void launchSystemPlayer() {
+        final Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+        intent.putExtra(DetailsActivity.MOVIE, _model.getMovie());
+        startActivity(intent);
+    }
+
+    @Override
+    public void launchExoplayer() {
+        final Intent intent = new Intent(getActivity(), ExoPlayerActivity.class);
+        intent.putExtra(DetailsActivity.MOVIE, _model.getMovie());
+        getActivity().startActivity(intent, null);
+    }
+
+    @Override
+    public void launchVlc() {
+        //_selectedMovie = movie;
+        _vlcController.launchVlc(getActivity(), _model.getMovie());
+    }
+
+    @Override
+    public void launchMxPlayer() {
+        //_selectedMovie = movie;
+        _mxController.launchMxPlayer(getActivity(), _model.getMovie());
+    }
+
 
     private void processList(final Category category) {
         final ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new CardPresenter());

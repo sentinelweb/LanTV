@@ -81,28 +81,4 @@ public class SmbShareListInteractor {
         return list;
     }
 
-    public Media getMedia(final SmbLocation location) {
-        final String url = SmbUrlBuilder.build(location);
-        return getMedia(url);
-    }
-    public Media getMedia(final String url) {
-        try {
-            final SmbFile f = new SmbFile(url);
-            return Media.create(
-                    url,
-                    f.getName(),
-                    f.length(),
-                    new Date(f.lastModified()),
-                    f.isDirectory(),
-                    f.isFile());
-        } catch (final MalformedURLException e) {
-            System.out.println("Samba: badurl" + url);
-            e.printStackTrace();
-        } catch (final Exception e) {
-            System.out.println("Samba: exception" + e.getMessage());
-            e.printStackTrace();
-        }
-        return null;
-    }
-
 }

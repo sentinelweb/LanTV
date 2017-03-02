@@ -74,7 +74,7 @@ public final class FileUtils {
      * @param target
      * @param inputStream
      */
-    public static void copyFileFromStream(final File target, final InputStream inputStream, final PublishSubject<Long> progressObservable) {
+    public static boolean copyFileFromStream(final File target, final InputStream inputStream, final PublishSubject<Long> progressObservable) {
         OutputStream out = null;
         try {
             out = new FileOutputStream(target);
@@ -86,19 +86,20 @@ public final class FileUtils {
                 out.write(buffer, 0, read);
                 count += read;
                 Log.d(FileUtils.class.getSimpleName(), "read:" + toMb(count));
-
                 if (progressObservable != null && count > lastPublish + MB) {
                     progressObservable.onNext(count);
                     lastPublish = count;
                 }
             }
             out.flush();
+            return true;
         } catch (final IOException e) {
             e.printStackTrace();
         } finally {
             closeStream(out);
             closeStream(inputStream);
         }
+        return false;
     }
 
     public static void copyFileFromAsset(final Context c, final String fileName, final File target) {
@@ -113,7 +114,7 @@ public final class FileUtils {
         }
     }
 
-    private static void closeStream(final Closeable out) {
+    public static void closeStream(final Closeable out) {
         try {
             if (out != null) {
                 out.close();

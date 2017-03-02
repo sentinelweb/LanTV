@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 
 import uk.co.sentinelweb.tvmod.model.Movie;
 
@@ -15,7 +16,7 @@ public class VlcController {
     private static final String VLC_PKG_NAME = "org.videolan.vlc";
     private static final String VLC_VIDEO_ACTIVITY = "org.videolan.vlc.gui.video.VideoPlayerActivity";
 
-    private static final int REQUEST_CODE = 42;
+    public static final int REQUEST_CODE = 42;
     private static final String EXTRA_POSITION_OUT = "extra_position";
     private static final String EXTRA_DURATION_OUT = "extra_duration";
 
@@ -44,7 +45,7 @@ public class VlcController {
         //vlcIntent.setPackage(VLC_PKG_NAME);
         vlcIntent.setDataAndTypeAndNormalize(uri, VIDEO_MIMETYPE);
         vlcIntent.putExtra(EXTRA_TITLE, movie.getTitle());
-        if (movie.getPosition()>0) {
+        if (movie.getPosition() > 0) {
             vlcIntent.putExtra(EXTRA_FROM_START, false);
             vlcIntent.putExtra(EXTRA_POSITION, movie.getPosition());// msec?
         }
@@ -52,13 +53,20 @@ public class VlcController {
         c.startActivityForResult(vlcIntent, REQUEST_CODE);
     }
 
-    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data, final Movie m) {
         if (REQUEST_CODE == requestCode) {
-
-            // TODO check result code
-            data.getLongExtra(EXTRA_POSITION_OUT, -1); //Last position in media when player exited
-            data.getLongExtra(EXTRA_DURATION_OUT, -1); //	long	Total duration of the media
-
+            if (resultCode == RESULT_OK) {
+                final long pos = data.getLongExtra(EXTRA_POSITION_OUT, -1);//Last position in media when player exited
+                if (pos > -1) {
+                    m.setPosition(pos);
+                }
+                final long dur = data.getLongExtra(EXTRA_DURATION_OUT, -1);//	long	Total duration of the media
+                if (dur > -1) {
+                    m.setDuration(dur);
+                }
+            } else {
+                Log.d(VlcController.class.getSimpleName(), "Got result code:" + resultCode);
+            }
 
         }
     }
