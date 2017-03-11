@@ -45,13 +45,13 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import javax.inject.Inject;
 
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
-import uk.co.sentinelweb.tvmod.C;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
 import uk.co.sentinelweb.tvmod.error.BrowseErrorActivity;
 import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
 import uk.co.sentinelweb.tvmod.model.Item;
+import uk.co.sentinelweb.tvmod.util.Extension;
 import uk.co.sentinelweb.tvmod.util.MxPlayerController;
 import uk.co.sentinelweb.tvmod.util.VlcController;
 
@@ -145,10 +145,8 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         this._model = model;
         if (create) {
             _rowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-            _cardPresenter.setLongClickListener(new CardPresenter.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(final Item m) {
-                    if (C.DIR_EXTENSION.equals(m.getExtension())) {
+            _cardPresenter.setLongClickListener((m) -> {
+                    if (m.getExtension()== Extension.DIR) {
                         _presenter.loadDirectory(m);
                     } else {
                         _presenter.launchDetails(m);
@@ -156,7 +154,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
                     }
                     return true;
                 }
-            });
+            );
             int i = 0;
             for (final Category category : model.getCategories()) {
                 addRow(category, i++);
@@ -357,7 +355,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
             if (item instanceof Item) {
                 final Item movie = (Item) item;
 //                if (movie==MovieList.PARENT_DIR_MOVIE) {
-//                    _presenter.launchMovie((Movie) item);
+//                    _presenter.launchItem((Movie) item);
 //                }
                 if (movie.getBackgroundImageURI() != null) {
                     _backgroundURI = movie.getBackgroundImageURI();
@@ -372,7 +370,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
                                   final RowPresenter.ViewHolder rowViewHolder, final Row row) {
             if (item instanceof Item) {
                 _selectedImageViewForTransition = ((ImageCardView) itemViewHolder.view).getMainImageView();
-                _presenter.launchMovie((Item) item);
+                _presenter.launchItem((Item) item);
             } else if (item instanceof String) {
                 showError((String) item);
             }

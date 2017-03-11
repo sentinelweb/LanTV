@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -56,6 +57,7 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
     private SmbLocation _location;
 
     private List<Media> topLevelList;
+    private final List<Media> filesList;
     private Media _mediaForLocation;
 
     @Inject
@@ -71,11 +73,12 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
         _smbShareListInteractor = smbShareListInteractor;
         _smbFileReadInteractor = smbFileReadInteractor;
         _preferences = preferences;
+        filesList = new LinkedList<>();
     }
 
     @Override
     public void onStart() {
-        //_preferences.saveLastLocation(this._location);
+        _preferences.saveLastLocation(this._location);
     }
 
     @Override
@@ -123,13 +126,13 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
         return (throwable) -> {
             Log.d(TAG, prefix, throwable);
             view.showLoading(false);
-            view.showError(prefix+throwable.getMessage());
+            view.showError(prefix + throwable.getMessage());
         };
     }
 
     public void loadSmbList(final Media m) {
         model.getCategories().add(C.PARENT_CATEGORY);
-        _mediaForLocation=m;
+        _mediaForLocation = m;
         _location = _smbLocationParser.parse(m.url());// updates location with auth
         final Subscription subscribe = getSambaListObservable(_location)
                 .subscribeOn(Schedulers.io())
@@ -170,6 +173,7 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
             _subscription = null;
         }
     }
+
     @NonNull
     private Single<Media> getSambaMediaObservable() {
         return _smbFileReadInteractor.getMediaObservable(_location)
@@ -177,6 +181,7 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
                 .map(this::addCredentialsForComputer)
                 .doOnSuccess((m) -> Log.d(TAG, "topmedia w auth:" + m));
     }
+
     @NonNull
     private Observable<SmbBrowseFragmentModel> getSambaListObservable(final SmbLocation smbLocation) {
         Log.d(TAG, new SmbUrlBuilder().build(smbLocation));
@@ -186,25 +191,31 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
                 .doOnNext((medialist) -> topLevelList = medialist)// on bg thread;
                 .doOnNext((medialist) -> {
                     for (final Media m : medialist) {
-                        Log.d(TAG, "toppath:" +isTopLevel()+":"+ m.url());
+                        Log.d(TAG, "toppath:" + isTopLevel() + ":" + m.url());
                     }
                 });
         if (!isTopLevel()) {
             listObservable =
                     listObservable.map((medialist) -> new MediaTitleSortComparator().sort(medialist))// sort the list by title
-                    .flatMap((medialist) -> Observable.from(medialist))// read subdirs
-                    .filter((media -> media.isDirectory() && !HiddenFiles.isExcludedUrl(media.url())))// remove exclusions & files
-                    .map((media) -> _smbLocationParser.parse(media.url()))
-                    .doOnNext(location -> Log.d(TAG, "subpath:" + _smbUrlBuilder.build(location)))// log
-                    //.onErrorResumeNext((throwable)-> {Log.d(MainMvpPresenter.class.getSimpleName(), "error getting directory:", throwable);}, () ->{})
-                    .map((location) -> _smbShareListInteractor.getList(location));
+                            .flatMap((medialist) -> Observable.from(medialist))// read subdirs
+                            .doOnNext((media -> {
+                                if (media.isFile()) {
+                                    filesList.add(media);
+                                }
+                            }))
+                            .filter((media -> media.isDirectory() && !HiddenFiles.isExcludedUrl(media.url())))// remove exclusions & files
+                            .map((media) -> _smbLocationParser.parse(media.url()))
+                            .doOnNext(location -> Log.d(TAG, "subpath:" + _smbUrlBuilder.build(location)))// log
+                            //.onErrorResumeNext((throwable)-> {Log.d(MainMvpPresenter.class.getSimpleName(), "error getting directory:", throwable);}, () ->{})
+                            .map((location) -> _smbShareListInteractor.getList(location))
+                            .concatWith(Observable.defer(()->Observable.just(filesList)));// add all the files as a row
         }
         Log.d(TAG, "return");
         return addToMovieListObservable(listObservable);
     }
 
     private boolean isTopLevel() {
-        return _mediaForLocation.isWorkgroup()||_mediaForLocation.isComputer();
+        return _mediaForLocation.isWorkgroup() || _mediaForLocation.isComputer();
     }
 
     @NonNull
@@ -248,7 +259,7 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
                 largestMediaFile.size() > LARGE_FILE_TEST_SIZE) {
             final Item item = _movieMapper.map(largestMediaFile);
             if (item != null) {
-                launchMovie(item);
+                launchItem(item);
                 view.finishActivity();
             }
         } else {
@@ -270,7 +281,7 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
             final Item currentDir = C.CURRRENT_DIR_ITEM.clone();
             final Item firstItem = category.items().get(0);
             final SmbLocation location = new SmbLocationParser().parse(firstItem.getVideoUrl());
-            if (firstItem.getExtension()==Extension.DIR) {
+            if (firstItem.getExtension() == Extension.DIR) {
                 final String dirname = location.getDirname();
                 if (dirname != null) {
                     location.setDirname(concat(dirname.split("/"), "/", 0, -1));
@@ -287,20 +298,21 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
     }
 
     @Override
-    public void launchMovie(final Item item) {
+    public void launchItem(final Item item) {
         if (item != null) {
             if (item == C.PARENT_DIR_ITEM) {
                 final SmbLocation parent = getParentLocation();
                 if (parent != null) {
                     view.launchBrowser(parent);
+                    view.finishActivity();
                 }
             } else if (C.CURRENT_DIR_TITLE.equals(item.getTitle())) {
                 view.launchBrowser(_smbLocationParser.parse(item.getVideoUrl()));
-            } else if (item.getExtension()==Extension.DIR) {
+            } else if (item.getExtension() == Extension.DIR) {
                 loadDirectory(item);
-            } else if (item.getExtension()==Extension.WKGP || item.getExtension()==Extension.SRVR || item.getExtension()==Extension.SHARE) {
+            } else if (item.getExtension() == Extension.WKGP || item.getExtension() == Extension.SRVR || item.getExtension() == Extension.SHARE) {
                 loadDirectory(item);
-            } else if (item.getExtension()==Extension.PRN) {
+            } else if (item.getExtension() == Extension.PRN) {
                 view.showError("Printers are unsupported");
             } else if ((item.getExtension().getSupported())) {
                 view.launchExoplayer(item);
@@ -345,25 +357,5 @@ public class SmbBrowsePresenter implements SmbBrowseMvpContract.Presenter {
         }
         return parentLocation;
     }
-
-    // cache file and use VLC
-//            final File bufferFile = view.getBufferFile(movie);
-//            view.showDownloadDialog();
-//            view.updateDownloadDialog("Downloading file:"+movie.getTitle());
-//            Log.d(FileUtils.class.getSimpleName(), "Downloading file:"+movie.getTitle());
-//            final Subscription subscription = smbFileReadInteractor
-//                    .openFileObservable(movie.getVideoUrl(), TestData.USER, TestData.PASS)
-//                    .observeOn(Schedulers.io())
-//                    .doOnNext(inputStream -> FileUtils.copyFileFromStream(bufferFile, inputStream))
-//                    .subscribeOn(Schedulers.io())
-//                    .subscribe((inputStream) -> { },
-//                            (throwable) -> view.showError(throwable),
-//                            () -> {
-//                                view.closeDownloadDialog();
-//                                final Movie cachedMovie = new Movie();
-//                                cachedMovie.setVideoUrl(Uri.fromFile(bufferFile).toString());
-//                                view.launchVlcSmb(movie);
-//                            });
-//            _subscription.add(subscription);
 
 }

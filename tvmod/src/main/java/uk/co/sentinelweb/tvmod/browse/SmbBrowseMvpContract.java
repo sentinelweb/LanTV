@@ -9,7 +9,7 @@ public interface SmbBrowseMvpContract {
 
         void setupData(SmbLocation location);
 
-        void launchMovie(Item item);
+        void launchItem(Item item);
 
         void loadDirectory(Item item);
 
