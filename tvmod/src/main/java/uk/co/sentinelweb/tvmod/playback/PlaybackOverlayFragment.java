@@ -62,7 +62,7 @@ import rx.Subscription;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.browse.CardPresenter;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 /*
  * Class for video playback with media control
@@ -94,11 +94,11 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
     private SkipNextAction mSkipNextAction;
     private SkipPreviousAction mSkipPreviousAction;
     private PlaybackControlsRow mPlaybackControlsRow;
-    private ArrayList<Movie> mItems = new ArrayList<>();
+    private ArrayList<Item> mItems = new ArrayList<>();
     private int mCurrentItem;
     private Handler mHandler;
     private Runnable mRunnable;
-    private Movie mSelectedMovie;
+    private Item _mSelectedItem;
 
     private OnPlayPauseClickedListener mCallback;
     private Subscription _subscribe;
@@ -108,13 +108,13 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
         super.onCreate(savedInstanceState);
 
         mItems = new ArrayList<>();
-        mSelectedMovie = (Movie) getActivity()
+        _mSelectedItem = (Item) getActivity()
                 .getIntent().getSerializableExtra(DetailsActivity.MOVIE);
-        mItems.add(mSelectedMovie);
-        _subscribe = Observable.<List<Movie>>empty()
+        mItems.add(_mSelectedItem);
+        _subscribe = Observable.<List<Item>>empty()
 //                MovieList.setupMovies()
 //                .subscribeOn(Schedulers.io())
-                .subscribe(new Observer<List<Movie>>() {
+                .subscribe(new Observer<List<Item>>() {
                     @Override
                     public void onCompleted() {
 
@@ -126,10 +126,10 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
                     }
 
                     @Override
-                    public void onNext(final List<Movie> movies) {
+                    public void onNext(final List<Item> movies) {
                         for (int j = 0; j < movies.size(); j++) {
                             mItems.add(movies.get(j));
-                            if (mSelectedMovie.getTitle().contentEquals(movies.get(j).getTitle())) {
+                            if (_mSelectedItem.getTitle().contentEquals(movies.get(j).getTitle())) {
                                 mCurrentItem = j;
                             }
                         }
@@ -229,12 +229,12 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
     }
 
     private int getDuration() {
-        final Movie movie = mItems.get(mCurrentItem);
+        final Item item = mItems.get(mCurrentItem);
         final MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            mmr.setDataSource(movie.getVideoUrl(), new HashMap<>());
+            mmr.setDataSource(item.getVideoUrl(), new HashMap<>());
         } else {
-            mmr.setDataSource(movie.getVideoUrl());
+            mmr.setDataSource(item.getVideoUrl());
         }
         final String time = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         final long duration = Long.parseLong(time);
@@ -243,7 +243,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
 
     private void addPlaybackControlsRow() {
         if (SHOW_DETAIL) {
-            mPlaybackControlsRow = new PlaybackControlsRow(mSelectedMovie);
+            mPlaybackControlsRow = new PlaybackControlsRow(_mSelectedItem);
         } else {
             mPlaybackControlsRow = new PlaybackControlsRow();
         }
@@ -308,7 +308,7 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
 
     private void updatePlaybackRow(final int index) {
         if (mPlaybackControlsRow.getItem() != null) {
-            final Movie item = (Movie) mPlaybackControlsRow.getItem();
+            final Item item = (Item) mPlaybackControlsRow.getItem();
             if (mItems.size()<mCurrentItem) {
                 item.setTitle(mItems.get(mCurrentItem).getTitle());
                 item.setExtension(mItems.get(mCurrentItem).getExtension());
@@ -327,8 +327,8 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
 
     private void addOtherRows() {
         final ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new CardPresenter());
-        for (final Movie movie : mItems) {
-            listRowAdapter.add(movie);
+        for (final Item item : mItems) {
+            listRowAdapter.add(item);
         }
         final HeaderItem header = new HeaderItem(0, getString(R.string.related_movies));
         mRowsAdapter.add(new ListRow(header, listRowAdapter));
@@ -417,14 +417,14 @@ public class PlaybackOverlayFragment extends android.support.v17.leanback.app.Pl
 
     // Container Activity must implement this interface
     public interface OnPlayPauseClickedListener {
-        void onFragmentPlayPause(Movie movie, int position, Boolean playPause);
+        void onFragmentPlayPause(Item item, int position, Boolean playPause);
     }
 
     static class DescriptionPresenter extends AbstractDetailsDescriptionPresenter {
         @Override
         protected void onBindDescription(final ViewHolder viewHolder, final Object item) {
-            viewHolder.getTitle().setText(((Movie) item).getTitle());
-            viewHolder.getSubtitle().setText(((Movie) item).getExtension());
+            viewHolder.getTitle().setText(((Item) item).getTitle());
+            viewHolder.getSubtitle().setText(((Item) item).getExtension().toString());
         }
     }
 }

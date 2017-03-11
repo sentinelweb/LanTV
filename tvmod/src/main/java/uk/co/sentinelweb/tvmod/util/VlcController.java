@@ -5,14 +5,16 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.Toast;
 
-import uk.co.sentinelweb.tvmod.model.Movie;
+import javax.inject.Inject;
+
+import uk.co.sentinelweb.tvmod.model.Item;
 
 /**
  * Created by robertm on 17/02/2017.
  */
 public class VlcController {
-
     private static final String VLC_PKG_NAME = "org.videolan.vlc";
     private static final String VLC_VIDEO_ACTIVITY = "org.videolan.vlc.gui.video.VideoPlayerActivity";
 
@@ -31,29 +33,58 @@ public class VlcController {
     public static final String EXTRA_POSITION = "position";
     public static final String VIDEO_MIMETYPE = "video/*";
 
+    final Activity c;
+    final WebProxyManager _webProxyManager;
+
+    @Inject
+    public VlcController(final Activity c, final WebProxyManager webProxyManager) {
+        this._webProxyManager = webProxyManager;
+        this.c = c;
+    }
+
+    public boolean checkInstalled() {
+        final boolean installed = PackageUtils.isAppInstalled(c, VLC_PKG_NAME);
+        return installed;
+    }
+
     /**
+     * @param item selected movie
+     */
+    public void launchVlcProxy(final Item item) {
+        if (checkInstalled()) {
+            _webProxyManager.launchProxyMovieAction(item, this::launchIntent);
+        } else {
+            Toast.makeText(c, "No MXplayer installed", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Launch the video uri for VLC using the smb:// url
      * <a href="https://wiki.videolan.org/Android_Player_Intents/">VLC android intents</a>
      *
-     * @param c     context
-     * @param movie selectred movie
+     * @param item selectred movie
      */
-    public void launchVlc(final Activity c, final Movie movie) {
+    public void launchVlcSmb(final Item item) {
         //Uri uri = Uri.parse("file:///storage/emulated/0/Movies/KUNG FURY Official Movie.mp4");
-        final Uri uri = Uri.parse(movie.getVideoUrl());
+        final Uri uri = Uri.parse(item.getVideoUrl());
+        launchIntent(item, uri);
+    }
+
+    public void launchIntent(final Item item, final Uri uri) {
         final Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
         vlcIntent.setComponent(new ComponentName(VLC_PKG_NAME, VLC_VIDEO_ACTIVITY));
         //vlcIntent.setPackage(VLC_PKG_NAME);
         vlcIntent.setDataAndTypeAndNormalize(uri, VIDEO_MIMETYPE);
-        vlcIntent.putExtra(EXTRA_TITLE, movie.getTitle());
-        if (movie.getPosition() > 0) {
+        vlcIntent.putExtra(EXTRA_TITLE, item.getTitle());
+        if (item.getPosition() > 0) {
             vlcIntent.putExtra(EXTRA_FROM_START, false);
-            vlcIntent.putExtra(EXTRA_POSITION, movie.getPosition());// msec?
+            vlcIntent.putExtra(EXTRA_POSITION, item.getPosition());// msec?
         }
         //vlcIntent.putExtra("subtitles_location", "/sdcard/Movies/Fifty-Fifty.srt");
         c.startActivityForResult(vlcIntent, REQUEST_CODE);
     }
 
-    public void onActivityResult(final int requestCode, final int resultCode, final Intent data, final Movie m) {
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data, final Item m) {
         if (REQUEST_CODE == requestCode) {
             if (resultCode == RESULT_OK) {
                 final long pos = data.getLongExtra(EXTRA_POSITION_OUT, -1);//Last position in media when player exited

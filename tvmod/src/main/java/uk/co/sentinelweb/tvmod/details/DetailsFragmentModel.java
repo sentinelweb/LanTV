@@ -2,14 +2,14 @@ package uk.co.sentinelweb.tvmod.details;
 
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import uk.co.sentinelweb.tvmod.model.Category;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 public class DetailsFragmentModel {
     private SmbLocation _location;
 
     private Category _category;
 
-    private Movie _movie;
+    private Item _item;
 
     public SmbLocation getLocation() {
         return _location;
@@ -27,11 +27,11 @@ public class DetailsFragmentModel {
         this._category = category;
     }
 
-    public Movie getMovie() {
-        return _movie;
+    public Item getItem() {
+        return _item;
     }
 
-    public void setMovie(final Movie movie) {
-        this._movie = movie;
+    public void setItem(final Item item) {
+        this._item = item;
     }
 }

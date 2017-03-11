@@ -8,14 +8,14 @@ import java.util.List;
 
 import uk.co.sentinelweb.tvmod.C;
 import uk.co.sentinelweb.tvmod.model.Category;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 import static junit.framework.Assert.assertEquals;
 
 /**
  * Created by robert on 19/02/2017.
  */
-public class CategoryMovieRowItemTitleComparatorTest {
+public class CategoryItemRowItemTitleComparatorTest {
 
     CategoryMovieRowItemTitleComparator sut = new CategoryMovieRowItemTitleComparator();
 
@@ -39,14 +39,14 @@ public class CategoryMovieRowItemTitleComparatorTest {
 
     private void checkOrder(final Category category, final String[] strings) {
         for (int i = 0; i < strings.length; i++) {
-            assertEquals(strings[i], category.movies().get(i).getTitle());
+            assertEquals(strings[i], category.items().get(i).getTitle());
         }
     }
 
     private Category buildCategory(final List<String> titles) {
-        final List<Movie> movies = new ArrayList<>();
+        final List<Item> movies = new ArrayList<>();
         for (final String title : titles) {
-            final Movie m = new Movie();
+            final Item m = new Item();
             m.setTitle(title);
             movies.add(m);
         }

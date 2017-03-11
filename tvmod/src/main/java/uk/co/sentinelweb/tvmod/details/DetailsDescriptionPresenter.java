@@ -16,17 +16,17 @@ package uk.co.sentinelweb.tvmod.details;
 
 import android.support.v17.leanback.widget.AbstractDetailsDescriptionPresenter;
 
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 public class DetailsDescriptionPresenter extends AbstractDetailsDescriptionPresenter {
 
     @Override
-    protected void onBindDescription(ViewHolder viewHolder, Object item) {
-        Movie movie = (Movie) item;
+    protected void onBindDescription(final ViewHolder viewHolder, final Object item) {
+        final Item movie = (Item) item;
 
         if (movie != null) {
             viewHolder.getTitle().setText(movie.getTitle());
-            viewHolder.getSubtitle().setText(movie.getExtension());
+            viewHolder.getSubtitle().setText(movie.getExtension().toString());
             viewHolder.getBody().setText(movie.getDescription());
         }
     }

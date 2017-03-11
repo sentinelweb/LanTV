@@ -21,6 +21,12 @@ public class LanTvApplication extends Application {
         jcifs.Config.registerSmbURLHandler();
     }
 
+    private AppComponent _appComponent;
+
+    public AppComponent getAppComponent() {
+        return _appComponent;
+    }
+
     @Override
     protected void attachBaseContext(final Context base) {
         super.attachBaseContext(base);
@@ -30,13 +36,15 @@ public class LanTvApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        _appComponent = DaggerAppComponent.builder()
+                .appModule(new AppModule(this))
+                .smbModule(new SmbModule())
+                .build();
+
         final WebServerConfig config = new WebServerConfig.Builder()
-//                .addProcessor(new PingCommandProcessor("/ping"))
                 .addProcessor(new SmbStreamCommandProcessor(/*"/s/"*/))
                 .addProcessor(new AssetCommandProcessor("/a/", this))
                 .addProcessor(new DrawableCommandProcessor("/d/", this))
-//                .addForward("/favicon.ico", "/d/mipmap/ic_launcher")
-//                .addRedirect("/google", "http://www.google.com")
                 .build();
         setWebServerConfig(config);
     }

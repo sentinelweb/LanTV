@@ -33,7 +33,13 @@ public class LocalFileListInteractor {
                     list.add(Media.create("file://"+f.getAbsolutePath(),
                             f.getName(),
                             f.length(),
-                            new Date(f.lastModified()),f.isDirectory(),f.isFile()));
+                            new Date(f.lastModified()),
+                            false,
+                            false,
+                            false,
+                            false,
+                            f.isDirectory(),
+                            f.isFile()));
                 }
             }
         }

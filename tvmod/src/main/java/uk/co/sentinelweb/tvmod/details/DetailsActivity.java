@@ -20,9 +20,10 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
+import uk.co.sentinelweb.tvmod.LanTvApplication;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.browse.SmbBrowseActivity;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 /*
  * Details activity class that loads LeanbackDetailsFragment class
@@ -32,15 +33,15 @@ public class DetailsActivity extends Activity {
     public static final String MOVIE = "Movie";
     public static final String LOCATION = "Location";
 
-    public static Intent getIntent(final Context c, final SmbLocation location, final Movie movie) {
+    public static Intent getIntent(final Context c, final SmbLocation location, final Item item) {
         final Intent i = new Intent(c, SmbBrowseActivity.class);
         i.putExtra(LOCATION, location);
         i.putExtra(MOVIE, location);
         return i;
     }
 
-    DetailsMvpContract.View fragment;
-
+    DetailsMvpContract.View _fragment;
+    DetailsActivityComponent component;
     /**
      * Called when the activity is first created.
      */
@@ -48,9 +49,11 @@ public class DetailsActivity extends Activity {
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
-        fragment = (DetailsFragment) getFragmentManager().findFragmentById(R.id.details_fragment);
-        final DetailsMvpContract.Presenter presenter = new DetailsPresenter(fragment);
-        fragment.setPresenter(presenter);
+        final DetailsFragment fragment = (DetailsFragment) getFragmentManager().findFragmentById(R.id.details_fragment);
+        this._fragment = fragment;
+        component = ((LanTvApplication)getApplication()).getAppComponent().plus(new DetailsActivityModule(this, fragment));
+        //component.inject(this);
+        component.inject(fragment);
     }
 
 }

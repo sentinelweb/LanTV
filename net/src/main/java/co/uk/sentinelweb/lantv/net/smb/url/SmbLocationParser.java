@@ -16,7 +16,7 @@ public class SmbLocationParser {
             String username = null;
             String passwd = null;
 
-            if (authority.indexOf("@")>-1) {
+            if (authority!=null && authority.indexOf("@")>-1) {
                 final String[] authSplit = authority.split("@");
                 if (authority.indexOf(":")>-1) {
                     final String[] userPass = authSplit[0].split(":");
@@ -57,7 +57,7 @@ public class SmbLocationParser {
             }
 
             final SmbLocation location = new SmbLocation(
-                url.getHost(),
+                    !"".equals(url.getHost())?url.getHost():null,
                     share,
                     path,
                     file,

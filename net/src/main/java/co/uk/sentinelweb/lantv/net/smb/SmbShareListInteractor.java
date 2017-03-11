@@ -2,11 +2,11 @@ package co.uk.sentinelweb.lantv.net.smb;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import co.uk.sentinelweb.lantv.domain.Media;
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
+import co.uk.sentinelweb.lantv.net.smb.url.SmbMediaCreator;
 import co.uk.sentinelweb.lantv.net.smb.url.SmbUrlBuilder;
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
@@ -27,18 +27,9 @@ public class SmbShareListInteractor {
     }
 
     public List<Media> getList(final SmbLocation location) {
-//        jcifs.Config.setProperty("jcifs.smb.client.username", username);
-//        jcifs.Config.setProperty("jcifs.smb.client.password", password);
-
-        //final String url = buildUrl(ipAddr, shareName, dirname, username, password);
-        final String url = SmbUrlBuilder.build(location);
-        return getList(url);
-    }
-
-    public List<Media> getList(final String url) {
         final SmbFile parent;
         SmbFile[] files = new SmbFile[0];
-
+        final String url = new SmbUrlBuilder().build(location);
         final List<Media> list = new ArrayList<>();
         try {
             System.out.println("Samba: " + "testing url: " + url);
@@ -54,23 +45,19 @@ public class SmbShareListInteractor {
             final long t2 = System.currentTimeMillis() - t1;
             int fileCount = 0;
             int directoryCount = 0;
+            final SmbMediaCreator mediaCreator= new SmbMediaCreator();
             for (int i = 0; i < files.length; i++) {
                 try {
                     final SmbFile child = files[i];
-                    list.add(Media.create(
-                            url + child.getName(),
-                            child.getName(),
-                            child.length(),
-                            new Date(child.lastModified()),
-                            child.isDirectory(),
-                            child.isFile()));
+                    final Media media = mediaCreator.createMedia(child);
+                    list.add(media);
                     fileCount += child.isFile() ? 1 : 0;
                     directoryCount += child.isDirectory() ? 1 : 0;
                 } catch (final SmbException e) {
                     e.printStackTrace();
                 }
             }
-            System.out.println("Samba: files:" + fileCount + " dirs:" + directoryCount + " total" + files.length + " files in " + t2 + "ms");
+            System.out.println("Samba: files:" + fileCount + " dirs:" + directoryCount + " total:" + files.length + " files in " + t2 + "ms");
         } catch (final MalformedURLException e) {
             System.out.println("Samba: badurl" + url);
             e.printStackTrace();
@@ -80,5 +67,7 @@ public class SmbShareListInteractor {
         }
         return list;
     }
+
+
 
 }

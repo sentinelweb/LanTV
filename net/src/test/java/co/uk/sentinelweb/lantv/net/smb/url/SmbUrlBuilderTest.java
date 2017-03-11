@@ -17,72 +17,79 @@ public class SmbUrlBuilderTest {
     public static final String FILE = "file.ext";
     public static final String USER = "user";
     public static final String PASS = "pass";
-
+    SmbUrlBuilder sut = new SmbUrlBuilder();
     static {
         jcifs.Config.registerSmbURLHandler();
+    }
+
+    @Test
+    public void buildWorkgroup() throws Exception {
+        final SmbLocation l = new SmbLocation(null, null, null);
+
+        assertEquals("smb://", sut.build(l));
     }
 
     @Test
     public void buildSimple() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, PATH_SINGLE);
 
-        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_SINGLE + "/", SmbUrlBuilder.build(l));
+        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_SINGLE + "/", sut.build(l));
     }
 
     @Test
     public void buildComputer() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, null, null);
 
-        assertEquals("smb://" + IP_ADDR + "/" , SmbUrlBuilder.build(l));
+        assertEquals("smb://" + IP_ADDR + "/" , sut.build(l));
     }
 
     @Test
     public void buildShare() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, null);
 
-        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" , SmbUrlBuilder.build(l));
+        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" , sut.build(l));
     }
 
     @Test
     public void buildPathMulti() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, PATH_MULTI);
 
-        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/", SmbUrlBuilder.build(l));
+        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/", sut.build(l));
     }
 
     @Test
     public void buildPathMultiSlash() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, PATH_MULTI + "/");
 
-        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/", SmbUrlBuilder.build(l));
+        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/", sut.build(l));
     }
 
     @Test
     public void buildPathMultiSpace() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, PATH_MULTI_SPACE);
 
-        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI_SPACE + "/", SmbUrlBuilder.build(l));
+        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI_SPACE + "/", sut.build(l));
     }
 
     @Test
     public void buildPathMultiFile() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, PATH_MULTI + "/", FILE);
 
-        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/" + FILE, SmbUrlBuilder.build(l));
+        assertEquals("smb://" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/" + FILE, sut.build(l));
     }
 
     @Test
     public void buildPathUserMultiFile() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, PATH_MULTI + "/", FILE, USER, null);
 
-        assertEquals("smb://" + USER + "@" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/" + FILE, SmbUrlBuilder.build(l));
+        assertEquals("smb://" + USER + "@" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/" + FILE, sut.build(l));
     }
 
     @Test
     public void buildPathUserPassMultiFile() throws Exception {
         final SmbLocation l = new SmbLocation(IP_ADDR, SHARE, PATH_MULTI + "/", FILE, USER, PASS);
 
-        assertEquals("smb://" + USER + ":" + PASS + "@" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/" + FILE, SmbUrlBuilder.build(l));
+        assertEquals("smb://" + USER + ":" + PASS + "@" + IP_ADDR + "/" + SHARE + "/" + PATH_MULTI + "/" + FILE, sut.build(l));
     }
 
 

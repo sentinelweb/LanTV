@@ -16,6 +16,6 @@
     <color name="yellow">#EEFF41</color>
     <color name="default_background">#3d3d3d</color>
     <color name="icon_supported">@color/white</color>
-    <color name="icon_unsupported">@color/grey_300</color>
+    <color name="icon_unsupported">@color/grey_500</color>
 
 </resources>

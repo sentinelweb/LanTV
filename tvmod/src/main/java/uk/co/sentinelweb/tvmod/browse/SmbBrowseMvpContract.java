@@ -1,7 +1,7 @@
 package uk.co.sentinelweb.tvmod.browse;
 
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 import uk.co.sentinelweb.tvmod.mvp.BaseMvpContract;
 
 public interface SmbBrowseMvpContract {
@@ -9,11 +9,14 @@ public interface SmbBrowseMvpContract {
 
         void setupData(SmbLocation location);
 
-        void launchMovie(Movie item);
+        void launchMovie(Item item);
 
-        void loadDirectory(Movie movie);
+        void loadDirectory(Item item);
 
-        void launchDetails(Movie m);
+        void launchDetails(Item m);
+
+        void onStart();
+
     }
 
     interface View extends BaseMvpContract.View<Presenter> {
@@ -22,9 +25,9 @@ public interface SmbBrowseMvpContract {
 
         void updateBackGround();
 
-        void launchExoplayer(Movie movie);
+        void launchExoplayer(Item item);
 
-//        void launchVlc(Movie movie);
+//        void launchVlcSmb(Movie movie);
 //
 //        void showDownloadDialog();
 //
@@ -38,15 +41,17 @@ public interface SmbBrowseMvpContract {
 
 //        File getBufferFile(Movie movie);
 
-        void launchDetails(SmbLocation location, Movie movie);
+        void launchDetails(SmbLocation location, Item item);
 
         void launchBrowser(SmbLocation parent);
 
-        void launchVlc(Movie movie);
+        void launchVlc(Item item);
 
-        void launchMxPlayer(Movie movie);
+        void launchMxPlayer(Item item);
 
         void finishActivity();
+
+        void showLoading(boolean show);
     }
 
 }

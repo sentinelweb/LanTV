@@ -2,6 +2,8 @@ package uk.co.sentinelweb.tvmod.details;
 
 import android.util.Log;
 
+import javax.inject.Inject;
+
 import co.uk.sentinelweb.lantv.net.smb.SmbShareListInteractor;
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import rx.Observable;
@@ -12,7 +14,7 @@ import rx.subscriptions.CompositeSubscription;
 import uk.co.sentinelweb.tvmod.browse.SmbBrowsePresenter;
 import uk.co.sentinelweb.tvmod.mapper.CategoryMapper;
 import uk.co.sentinelweb.tvmod.mapper.MovieMapper;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 /**
  * Created by robert on 18/02/2017.
@@ -26,11 +28,14 @@ public class DetailsPresenter implements DetailsMvpContract.Presenter {
     private CompositeSubscription _subscription;
     private DetailsFragmentModel _model;
 
-    public DetailsPresenter(final DetailsMvpContract.View view) {
+    @Inject
+    public DetailsPresenter(final DetailsMvpContract.View view,final MovieMapper movieMapper,
+                            final CategoryMapper categoryMapper,
+                            final SmbShareListInteractor smbShareListInteractor) {
         _view = view;
-        _movieMapper = new MovieMapper();
-        _categoryMapper = new CategoryMapper();
-        _smbShareListInteractor = new SmbShareListInteractor();
+        _movieMapper = movieMapper;
+        _categoryMapper = categoryMapper;
+        _smbShareListInteractor=smbShareListInteractor;
 
     }
 
@@ -67,9 +72,9 @@ public class DetailsPresenter implements DetailsMvpContract.Presenter {
     }
 
     @Override
-    public void setupData(final SmbLocation location, final Movie m) {
+    public void setupData(final SmbLocation location, final Item m) {
         _model = new DetailsFragmentModel();
         _model.setLocation(location);
-        _model.setMovie(m);
+        _model.setItem(m);
     }
 }

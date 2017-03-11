@@ -61,5 +61,12 @@
     <string name="sample_list_load_error">One or more sample lists failed to load</string>
     <string name="play_system">System Player</string>
     <string name="play_exo">ExoPlayer</string>
+    <string name="image">Image</string>
+    <string name="other">Other</string>
+    <string name="dir">Folder</string>
+    <string name="computer">Computer</string>
+    <string name="workgroup">Workgroup</string>
+    <string name="printer">Printer</string>
+    <string name="share">Share</string>
 
 </resources>

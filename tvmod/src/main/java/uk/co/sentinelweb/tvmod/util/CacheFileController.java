@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 
 import co.uk.sentinelweb.lantv.net.smb.SmbFileReadInteractor;
@@ -20,32 +21,33 @@ public class CacheFileController {
 
     public static final String TAG = CacheFileController.class.getSimpleName();
     SmbFileReadInteractor _smbFileReadInteractor;
-    //SmbShareListInteractor _smbShareListInteractor;
     private Subscription _subscription;
     private InputStream _inputStream;
+    private SmbLocation _f;
 
-    public CacheFileController(final SmbFileReadInteractor smbFileReadInteractor
-                               /*, final SmbShareListInteractor smbShareListInteractor*/) {
+    public CacheFileController(final SmbFileReadInteractor smbFileReadInteractor) {
         _smbFileReadInteractor = smbFileReadInteractor;
-        //_smbShareListInteractor = smbShareListInteractor;
     }
 
     public Observable<Long> downloadInBackground(final Context c, final SmbLocation f) {
+        closeStream();
         final PublishSubject<Long> progressPublish = PublishSubject.create();
         FileUtils.clearBufferedFile(c);
-        final File bufferFile = FileUtils.getBufferFile(c, f.getFileName());
+        _f = f;
+        final File bufferFile = FileUtils.getBufferFile(c, _f.getFileName());
         _subscription =
                 _smbFileReadInteractor
                         .openFileObservable(f)
                         .observeOn(Schedulers.io())
                         .map((inputStream) -> this._inputStream = inputStream)
-                        .doOnNext(inputStream -> FileUtils.copyFileFromStream(bufferFile, inputStream, progressPublish))
-                        .doOnUnsubscribe(()->FileUtils.closeStream(_inputStream))
+                        .doOnUnsubscribe(() -> FileUtils.closeStream(_inputStream))
                         .subscribeOn(Schedulers.io())
                         .subscribe((inputStream) -> {
+                                    FileUtils.copyFileFromStream(bufferFile, inputStream, progressPublish);
                                 },
-                                (throwable) -> Log.d(TAG, "Error caching file:" + f.getFileName(), throwable),
-                                () -> {
+                                (throwable) -> {
+                                    Log.d(TAG, "Error caching file:" + f.getFileName(), throwable);
+                                    closeStream();
                                 });
         return progressPublish;
     }
@@ -53,6 +55,16 @@ public class CacheFileController {
     public void unsubscribe() {
         if (_subscription != null && !_subscription.isUnsubscribed()) {
             _subscription.unsubscribe();
+        }
+    }
+
+    public void closeStream() {
+        if (_inputStream != null) {
+            try {
+                _inputStream.close();
+            } catch (final IOException e) {
+                Log.d(TAG, "Error closing file:" + _f.getFileName(), e);
+            }
         }
     }
 }

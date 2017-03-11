@@ -42,7 +42,8 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
-import co.uk.sentinelweb.lantv.net.smb.SmbFileReadInteractor;
+import javax.inject.Inject;
+
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import uk.co.sentinelweb.tvmod.C;
 import uk.co.sentinelweb.tvmod.R;
@@ -50,8 +51,7 @@ import uk.co.sentinelweb.tvmod.details.DetailsActivity;
 import uk.co.sentinelweb.tvmod.error.BrowseErrorActivity;
 import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
-import uk.co.sentinelweb.tvmod.model.Movie;
-import uk.co.sentinelweb.tvmod.util.CacheFileController;
+import uk.co.sentinelweb.tvmod.model.Item;
 import uk.co.sentinelweb.tvmod.util.MxPlayerController;
 import uk.co.sentinelweb.tvmod.util.VlcController;
 
@@ -64,30 +64,30 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
     private Uri _backgroundURI;
     private BackgroundManager _backgroundManager;
 
-    private SmbBrowseMvpContract.Presenter _presenter;
-    private CardPresenter _cardPresenter;
-
-    private final VlcController _vlcController;
-    private final MxPlayerController _mxController;
+    @Inject protected CardPresenter _cardPresenter;
+    @Inject protected SmbBrowseMvpContract.Presenter _presenter;
+    @Inject protected VlcController _vlcController;
+    @Inject protected MxPlayerController _mxController;
 
     private ImageView _selectedImageViewForTransition = null;
 
     private SmbBrowseFragmentModel _model = null;
-    private Movie _selectedMovie;
+    private Item _selectedItem;
 
     public SmbBrowseFragment() {
-        _vlcController = new VlcController();
-        _mxController = new MxPlayerController(new CacheFileController(new SmbFileReadInteractor()));
+
     }
 
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
-        SmbLocation location = (SmbLocation) getActivity().getIntent().getSerializableExtra(DetailsActivity.LOCATION);
-        if (location == null) {
-            location = C.TEST_LOCATION;
-        }
+
+//        final WebProxyManager webProxyManager = new WebProxyManager(getActivity().getApplication());
+//        _vlcController = new VlcController(getActivity(), webProxyManager);
+//        _mxController = new MxPlayerController(getActivity(), webProxyManager);
+
+        final SmbLocation location = (SmbLocation) getActivity().getIntent().getSerializableExtra(DetailsActivity.LOCATION);
         _presenter.setupData(location);
 
         prepareBackgroundManager();
@@ -100,6 +100,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
     @Override
     public void onStart() {
         super.onStart();
+        _presenter.onStart();
     }
 
     @Override
@@ -144,10 +145,9 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         this._model = model;
         if (create) {
             _rowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-            _cardPresenter = new CardPresenter();
             _cardPresenter.setLongClickListener(new CardPresenter.OnLongClickListener() {
                 @Override
-                public boolean onLongClick(final Movie m) {
+                public boolean onLongClick(final Item m) {
                     if (C.DIR_EXTENSION.equals(m.getExtension())) {
                         _presenter.loadDirectory(m);
                     } else {
@@ -161,7 +161,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
             for (final Category category : model.getCategories()) {
                 addRow(category, i++);
             }
-            //Log.d(getClass().getSimpleName(),"movies:"+list.size());
+            //Log.d(getClass().getSimpleName(),"items:"+list.size());
 
 //        final HeaderItem gridHeader = new HeaderItem(i, "PREFERENCES");
 //        final GridItemPresenter mGridPresenter = new GridItemPresenter();
@@ -178,7 +178,7 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
 
     private void addRow(final Category category, final long index) {
         final ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(_cardPresenter);
-        for (final Movie m : category.movies()) {
+        for (final Item m : category.items()) {
             listRowAdapter.add(m);
         }
         final HeaderItem header = new HeaderItem(index, category.name() + " (" + category.count() + ")");
@@ -192,8 +192,8 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
             if (categoryNumber < _rowsAdapter.size()) {
                 listRowAdapter = (ArrayObjectAdapter) ((ListRow) _rowsAdapter.get(categoryNumber)).getAdapter();
                 int j = 0;
-                if (listRowAdapter.size() != category.movies().size()) {
-                    for (final Movie m : category.movies()) {
+                if (listRowAdapter.size() != category.items().size()) {
+                    for (final Item m : category.items()) {
                         if (j < listRowAdapter.size()) {
                             listRowAdapter.replace(j, m);
                         } else {
@@ -270,19 +270,19 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == VlcController.REQUEST_CODE) {
-            _vlcController.onActivityResult(requestCode, resultCode, data, _selectedMovie);
+            _vlcController.onActivityResult(requestCode, resultCode, data, _selectedItem);
         } else if (requestCode == MxPlayerController.REQUEST_CODE){
-            _mxController.onActivityResult(requestCode, resultCode, data, _selectedMovie);
+            _mxController.onActivityResult(requestCode, resultCode, data, _selectedItem);
         }
     }
 
     @Override
-    public void launchExoplayer(final Movie movie) {
+    public void launchExoplayer(final Item item) {
         if (_selectedImageViewForTransition != null) {
             _selectedImageViewForTransition = null;
         }
         final Intent intent = new Intent(getActivity(), ExoPlayerActivity.class);
-        intent.putExtra(DetailsActivity.MOVIE, movie);
+        intent.putExtra(DetailsActivity.MOVIE, item);
         getActivity().startActivity(intent, null);
     }
 
@@ -302,10 +302,10 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
 
 
     @Override
-    public void launchDetails(final SmbLocation location, final Movie movie) {
+    public void launchDetails(final SmbLocation location, final Item item) {
         // scene transition to details
         final Intent intent = new Intent(getActivity(), DetailsActivity.class);
-        intent.putExtra(DetailsActivity.MOVIE, movie);
+        intent.putExtra(DetailsActivity.MOVIE, item);
         intent.putExtra(DetailsActivity.LOCATION, location);
 
         if (_selectedImageViewForTransition != null) {
@@ -326,14 +326,14 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
     }
 
     @Override
-    public void launchVlc(final Movie movie) {
-        _selectedMovie = movie;
-        _vlcController.launchVlc(getActivity(), movie);
+    public void launchVlc(final Item item) {
+        _selectedItem = item;
+        _vlcController.launchVlcProxy(item);
     }
 
     @Override
-    public void launchMxPlayer(final Movie movie) {
-        _mxController.launchMxPlayer(getActivity(), movie);
+    public void launchMxPlayer(final Item item) {
+        _mxController.launchMxPlayer(item);
     }
 
     @Override
@@ -341,12 +341,21 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         getActivity().finish();
     }
 
+    @Override
+    public void showLoading(final boolean show) {
+        if (show) {
+            getProgressBarManager().show();
+        } else {
+            getProgressBarManager().hide();
+        }
+    }
+
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
         @Override
         public void onItemSelected(final Presenter.ViewHolder itemViewHolder, final Object item,
                                    final RowPresenter.ViewHolder rowViewHolder, final Row row) {
-            if (item instanceof Movie) {
-                final Movie movie = (Movie) item;
+            if (item instanceof Item) {
+                final Item movie = (Item) item;
 //                if (movie==MovieList.PARENT_DIR_MOVIE) {
 //                    _presenter.launchMovie((Movie) item);
 //                }
@@ -361,9 +370,9 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
         @Override
         public void onItemClicked(final Presenter.ViewHolder itemViewHolder, final Object item,
                                   final RowPresenter.ViewHolder rowViewHolder, final Row row) {
-            if (item instanceof Movie) {
+            if (item instanceof Item) {
                 _selectedImageViewForTransition = ((ImageCardView) itemViewHolder.view).getMainImageView();
-                _presenter.launchMovie((Movie) item);
+                _presenter.launchMovie((Item) item);
             } else if (item instanceof String) {
                 showError((String) item);
             }
@@ -376,8 +385,8 @@ public class SmbBrowseFragment extends BrowseFragment implements SmbBrowseMvpCon
 //     * @param movie
 //     */
 //    @Override
-//    public void launchVlc(final Movie movie) {
-//        _vlcUtil.launchVlc(getActivity(), movie);
+//    public void launchVlcSmb(final Movie movie) {
+//        _vlcUtil.launchVlcSmb(getActivity(), movie);
 //    }
 
 

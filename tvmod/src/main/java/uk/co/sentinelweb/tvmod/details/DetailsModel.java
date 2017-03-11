@@ -2,7 +2,7 @@ package uk.co.sentinelweb.tvmod.details;
 
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import uk.co.sentinelweb.tvmod.model.Category;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 /**
  * Created by robert on 18/02/2017.
@@ -10,7 +10,7 @@ import uk.co.sentinelweb.tvmod.model.Movie;
 
 public class DetailsModel {
     SmbLocation location;
-    Movie m;
+    Item m;
     Category category;// related
 
 

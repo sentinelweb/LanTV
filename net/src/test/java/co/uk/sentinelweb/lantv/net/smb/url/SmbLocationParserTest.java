@@ -96,4 +96,15 @@ public class SmbLocationParserTest {
         assertNull(loc.getPassword());
     }
 
+    @Test
+    public void parseEmpty() throws Exception {
+        final SmbLocation loc = new SmbLocationParser().parse("smb://");
+        assertNull( loc.getIpAddr());
+        assertNull(loc.getShareName());
+        assertNull(loc.getDirname());
+        assertNull(loc.getFileName());
+        assertNull(loc.getUsername());
+        assertNull(loc.getPassword());
+    }
+
 }

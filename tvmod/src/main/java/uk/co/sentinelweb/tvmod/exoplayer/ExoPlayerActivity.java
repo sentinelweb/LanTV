@@ -81,7 +81,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.details.DetailsActivity;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 import uk.co.sentinelweb.tvmod.util.FileUtils;
 
 /**
@@ -307,9 +307,9 @@ public class ExoPlayerActivity extends Activity implements OnClickListener, ExoP
             final String action = intent.getAction();
             final Uri[] uris;
             String[] extensions;
-            final Movie m;
+            final Item m;
             if (intent.hasExtra(DetailsActivity.MOVIE)) {
-                m = (Movie) intent.getSerializableExtra(DetailsActivity.MOVIE);
+                m = (Item) intent.getSerializableExtra(DetailsActivity.MOVIE);
                 uris = new Uri[]{Uri.parse(m.getVideoUrl())};
                 extensions = new String[]{FileUtils.getExt(m.getVideoUrl())};
             } else if (ACTION_VIEW.equals(action)) {

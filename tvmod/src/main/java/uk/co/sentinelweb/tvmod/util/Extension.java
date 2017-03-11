@@ -26,22 +26,29 @@ public enum Extension {
     PNG(false, MediaType.IMAGE),
     GIF(false, MediaType.IMAGE),
 
-    DIR(true, MediaType.FOLDER)
-    ;
+    DIR(true, MediaType.FOLDER),
+    SRVR(true, MediaType.COMPUTER),
+    WKGP(true, MediaType.WORKGROUP),
+    PRN(false, MediaType.PRINTER),
+    SHARE(true, MediaType.SHARE),
+
+    UNKNOWN(true, MediaType.OTHER),;
 
     Boolean _supported = null;
     MediaType _mediaType;
 
     static Map<String, Extension> valueMap;
+
     static {
         valueMap = new HashMap<>();
-        for (final Extension s:values()) {
+        for (final Extension s : values()) {
             valueMap.put(s.toString(), s);
         }
     }
 
+
     public static boolean isSupported(final String ext) {
-        if (ext!=null) {
+        if (ext != null) {
             final String key = ext.toUpperCase();
             return (valueMap.containsKey(key) ? valueMap.get(key)._supported : false);
         } else {
@@ -50,21 +57,24 @@ public enum Extension {
     }
 
     public static boolean shouldDisplay(final String ext) {
-        if (ext!=null) {
+        if (ext != null) {
             final String key = ext.toUpperCase();
             return valueMap.containsKey(key);
         } else {
-            return false;
+            return true;
         }
     }
 
-    public static int getIcon(final String ext) {
-        if (ext != null) {
-            final String key = ext.toUpperCase();
-            return (valueMap.containsKey(key) ? valueMap.get(key)._mediaType.resId : MediaType.OTHER.resId);
-        } else {
-            return MediaType.OTHER.resId;
-        }
+    public Boolean getSupported() {
+        return _supported;
+    }
+
+    public MediaType getMediaType() {
+        return _mediaType;
+    }
+
+    public int getIcon() {
+        return _mediaType.drawableResId;
     }
 
     Extension(final Boolean supported, final MediaType other) {
@@ -73,4 +83,14 @@ public enum Extension {
     }
 
 
+    public static Extension from(final String extString) {
+        if (extString == null) {
+            return null;
+        }
+        try {
+            return valueOf(extString.toUpperCase());
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
+    }
 }

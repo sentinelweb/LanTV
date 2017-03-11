@@ -15,22 +15,20 @@
 package uk.co.sentinelweb.tvmod.playback;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.VideoView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
-
-import uk.co.sentinelweb.tvmod.model.Movie;
 import uk.co.sentinelweb.tvmod.R;
+import uk.co.sentinelweb.tvmod.model.Item;
+
+//import com.bumptech.glide.Glide;
+//import com.bumptech.glide.request.animation.GlideAnimation;
+//import com.bumptech.glide.request.target.SimpleTarget;
 
 /**
  * PlaybackOverlayActivity for video playback that loads PlaybackOverlayFragment
@@ -47,7 +45,7 @@ public class PlaybackOverlayActivity extends Activity implements
      * Called when the activity is first created.
      */
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.playback_controls);
         loadViews();
@@ -67,8 +65,8 @@ public class PlaybackOverlayActivity extends Activity implements
     }
 
     @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        PlaybackOverlayFragment playbackOverlayFragment = (PlaybackOverlayFragment) getFragmentManager().findFragmentById(R.id.playback_controls_fragment);
+    public boolean onKeyUp(final int keyCode, final KeyEvent event) {
+        final PlaybackOverlayFragment playbackOverlayFragment = (PlaybackOverlayFragment) getFragmentManager().findFragmentById(R.id.playback_controls_fragment);
         switch (keyCode) {
             case KeyEvent.KEYCODE_MEDIA_PLAY:
                 playbackOverlayFragment.togglePlayback(false);
@@ -91,8 +89,8 @@ public class PlaybackOverlayActivity extends Activity implements
     /**
      * Implementation of OnPlayPauseClickedListener
      */
-    public void onFragmentPlayPause(Movie movie, int position, Boolean playPause) {
-        mVideoView.setVideoPath(movie.getVideoUrl());
+    public void onFragmentPlayPause(final Item item, final int position, final Boolean playPause) {
+        mVideoView.setVideoPath(item.getVideoUrl());
 
         if (position == 0 || mPlaybackState == LeanbackPlaybackState.IDLE) {
             setupCallbacks();
@@ -110,11 +108,11 @@ public class PlaybackOverlayActivity extends Activity implements
             mVideoView.pause();
         }
         updatePlaybackState(position);
-        updateMetadata(movie);
+        updateMetadata(item);
     }
 
-    private void updatePlaybackState(int position) {
-        PlaybackState.Builder stateBuilder = new PlaybackState.Builder()
+    private void updatePlaybackState(final int position) {
+        final PlaybackState.Builder stateBuilder = new PlaybackState.Builder()
                 .setActions(getAvailableActions());
         int state = PlaybackState.STATE_PLAYING;
         if (mPlaybackState == LeanbackPlaybackState.PAUSED) {
@@ -136,31 +134,31 @@ public class PlaybackOverlayActivity extends Activity implements
         return actions;
     }
 
-    private void updateMetadata(final Movie movie) {
+    private void updateMetadata(final Item item) {
         final MediaMetadata.Builder metadataBuilder = new MediaMetadata.Builder();
 
-        String title = movie.getTitle().replace("_", " -");
+        final String title = item.getTitle().replace("_", " -");
 
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title);
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE,
-                movie.getDescription());
+                item.getDescription());
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI,
-                movie.getCardImageUrl());
+                item.getCardImageUrl());
 
         // And at minimum the title and artist for legacy support
         metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, title);
-        metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, movie.getExtension());
+        metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, item.getExtension().toString());
 
-        Glide.with(this)
-                .load(Uri.parse(movie.getCardImageUrl()))
-                .asBitmap()
-                .into(new SimpleTarget<Bitmap>(500, 500) {
-                    @Override
-                    public void onResourceReady(Bitmap bitmap, GlideAnimation anim) {
-                        metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap);
-                        mSession.setMetadata(metadataBuilder.build());
-                    }
-                });
+//        Glide.with(this)
+//                .load(Uri.parse(movie.getCardImageUrl()))
+//                .asBitmap()
+//                .into(new SimpleTarget<Bitmap>(500, 500) {
+//                    @Override
+//                    public void onResourceReady(Bitmap bitmap, GlideAnimation anim) {
+//                        metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap);
+//                        mSession.setMetadata(metadataBuilder.build());
+//                    }
+//                });
     }
 
     private void loadViews() {
@@ -174,7 +172,7 @@ public class PlaybackOverlayActivity extends Activity implements
         mVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
 
             @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
+            public boolean onError(final MediaPlayer mp, final int what, final int extra) {
                 String msg = "";
                 if (extra == MediaPlayer.MEDIA_ERROR_TIMED_OUT) {
                     msg = getString(R.string.video_error_media_load_timeout);
@@ -191,7 +189,7 @@ public class PlaybackOverlayActivity extends Activity implements
 
         mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
-            public void onPrepared(MediaPlayer mp) {
+            public void onPrepared(final MediaPlayer mp) {
                 if (mPlaybackState == LeanbackPlaybackState.PLAYING) {
                     mVideoView.start();
                 }
@@ -200,7 +198,7 @@ public class PlaybackOverlayActivity extends Activity implements
 
         mVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
-            public void onCompletion(MediaPlayer mp) {
+            public void onCompletion(final MediaPlayer mp) {
                 mPlaybackState = LeanbackPlaybackState.IDLE;
             }
         });

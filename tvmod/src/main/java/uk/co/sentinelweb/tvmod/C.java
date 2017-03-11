@@ -5,22 +5,23 @@ import java.util.Arrays;
 import co.uk.sentinelweb.lantv.net.smb.TestData;
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import uk.co.sentinelweb.tvmod.model.Category;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
+import uk.co.sentinelweb.tvmod.util.Extension;
 
 /**
  * Constants
  */
 public final class C {
-    public static final SmbLocation TEST_LOCATION = new SmbLocation("192.168.0.13", "Drobo", "video/movies/", null,TestData.USER, TestData.PASS);
+    public static final SmbLocation TEST_LOCATION = new SmbLocation("192.168.0.13", "Drobo", "video/items/", null,TestData.USER, TestData.PASS);
     public static final String TEST_CARD_IMAGE = "http://commondatastorage.googleapis.com/android-tv/Sample%20videos/Zeitgeist/Zeitgeist%202010_%20Year%20in%20Review/card.jpg";
     public static final String TEST_BG_IMAGE ="http://commondatastorage.googleapis.com/android-tv/Sample%20videos/April%20Fool's%202013/Introducing%20Google%20Fiber%20to%20the%20Pole/bg.jpg";
 
     public static final String DIR_EXTENSION = "Dir";
     public static final String PARENT_DIR_TITLE = "..";
     public static final String CURRENT_DIR_TITLE = ".";
-    public static final Movie PARENT_DIR_MOVIE = new Movie(PARENT_DIR_TITLE,"Parent directory",null,null, null,"Parent", 0l, DIR_EXTENSION, 0l);
-    public static final Category PARENT_CATEGORY = Category.builder(Arrays.asList(PARENT_DIR_MOVIE),"..",0);
-    public static final Movie CURRRENT_DIR_MOVIE = new Movie(CURRENT_DIR_TITLE,"Current directory",null,null, null,"Current", 0l, DIR_EXTENSION, 0l);
+    public static final Item PARENT_DIR_ITEM = new Item(PARENT_DIR_TITLE,"Parent directory",null,null, null,"Parent", 0l, Extension.DIR, 0l);
+    public static final Category PARENT_CATEGORY = Category.builder(Arrays.asList(PARENT_DIR_ITEM),"..",0);
+    public static final Item CURRRENT_DIR_ITEM = new Item(CURRENT_DIR_TITLE,"Current directory",null,null, null,"Current", 0l, Extension.DIR, 0l);
 
 //    public static final String MOVIE_CATEGORY[] = {
 //            "Category Zero",

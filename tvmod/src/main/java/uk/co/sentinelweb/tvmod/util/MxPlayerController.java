@@ -4,14 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.Toast;
 
-import java.net.URLEncoder;
+import javax.inject.Inject;
 
-import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
-import co.uk.sentinelweb.lantv.net.smb.url.SmbLocationParser;
-import rx.Subscription;
-import uk.co.sentinelweb.microservice.MicroService;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 
 public class MxPlayerController {
@@ -19,17 +16,18 @@ public class MxPlayerController {
     public static final String TAG = MxPlayerController.class.getSimpleName();
     public static final int REQUEST_CODE = 43;
 
-
     public static final String PACKAGE_FREE = "com.mxtech.videoplayer.ad";
     public static final String PACKAGE_PRO = "com.mxtech.videoplayer.pro";
     public static final String EXTRA_TITLE = "title";
     public static final String EXTRA_POSITION = "position";
 
-    CacheFileController downloadController;
-    private Subscription _serviceSubscribe;
+    final WebProxyManager _webProxyManager;
+    final Activity c;
 
-    public MxPlayerController(final CacheFileController cacheFileController) {
-        this.downloadController = cacheFileController;
+    @Inject
+    public MxPlayerController(final Activity c, final WebProxyManager webProxyManager) {
+        this._webProxyManager = webProxyManager;
+        this.c=c;
     }
 
     // RESPONSE CODES
@@ -37,47 +35,55 @@ public class MxPlayerController {
 //    Activity.RESULT_CANCELED: User canceled before starting any playback. Added in 1.8.4
 //    RESULT_ERROR (=Activity.RESULT_FIRST_USER): Last playback was ended with an error. Added in 1.8.4
 
-    /**
-     *
-     *
-     * @param c     context
-     * @param movie selected movie
-     */
-    public void launchMxPlayer(final Activity c, final Movie movie) {
-        final SmbLocation location = new SmbLocationParser().parse(movie.getVideoUrl());
-        c.startService(MicroService.getStartIntent(c));
-        _serviceSubscribe = MicroService.statusPublishSubject.subscribe((status) -> {
-            if (status == MicroService.Status.STARTED) {
-                final String proxyUriString = "http://localhost:4443/s/" + URLEncoder.encode(movie.getVideoUrl());
-                Log.d(TAG,"Server started: proxying:"+proxyUriString);
-                final Uri proxyUrl = Uri.parse(proxyUriString);
-                launchIntent(c, movie, proxyUrl);
-            }
-        }, (throwable) -> Log.d(TAG,"Error starting server", throwable));
+    public boolean checkInstalled() {
+        final boolean proInstalled = PackageUtils.isAppInstalled(c, PACKAGE_PRO);
+        final boolean freeInstalled = PackageUtils.isAppInstalled(c, PACKAGE_FREE);
+        return proInstalled || freeInstalled;
     }
 
+    public String getInstalled() {
+        if (PackageUtils.isAppInstalled(c, PACKAGE_PRO)) {
+            return PACKAGE_PRO;
+        } else if (PackageUtils.isAppInstalled(c, PACKAGE_FREE)) {
+            return PACKAGE_FREE;
+        }
+        return null;
+    }
+
+    /**
+     * @param item selected movie
+     */
+    public void launchMxPlayer( final Item item) {
+        final String packageInstalled = getInstalled();
+        if (packageInstalled != null) {
+            _webProxyManager.launchProxyMovieAction(item, this::launchIntent);
+        } else {
+            Toast.makeText(c, "No MXplayer installed", Toast.LENGTH_LONG).show();
+        }
+    }
 
     /**
      * Intent launcher
      * <a href="https://sites.google.com/site/mxvpen/api">MxPlayer android intents</a>
+     *
      * @param c
-     * @param movie
+     * @param item
      * @param proxy
      */
-    private void launchIntent(final Activity c, final Movie movie, final Uri proxy) {
+    private void launchIntent(final Item item, final Uri proxy) {
         final Intent mxIntent = new Intent(Intent.ACTION_VIEW, proxy);
         mxIntent.setPackage(PACKAGE_FREE);
-        mxIntent.putExtra(EXTRA_TITLE, movie.getTitle());
+        mxIntent.putExtra(EXTRA_TITLE, item.getTitle());
         mxIntent.putExtra("return_result", true);
         //mxIntent.putExtra("size", movie.size());
-        if (movie.getPosition() > 0) {
-            mxIntent.putExtra(EXTRA_POSITION, (long)(movie.getPosition()));// msec
+        if (item.getPosition() > 0) {
+            mxIntent.putExtra(EXTRA_POSITION, (long) (item.getPosition()));// msec
         }
         c.startActivityForResult(mxIntent, REQUEST_CODE);
     }
 
-    public void onActivityResult(final int requestCode, final int resultCode, final Intent data, final Movie selectedMovie) {
-        Log.d(TAG, "got result:"+data+":"+"for movie"+selectedMovie.getTitle());
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data, final Item selectedItem) {
+        Log.d(TAG, "got result:" + data + ":" + "for movie" + selectedItem.getTitle());
     }
 }
 

@@ -28,9 +28,10 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
+import javax.inject.Inject;
+
 import uk.co.sentinelweb.tvmod.R;
-import uk.co.sentinelweb.tvmod.model.Movie;
-import uk.co.sentinelweb.tvmod.util.Extension;
+import uk.co.sentinelweb.tvmod.model.Item;
 
 /*
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
@@ -45,6 +46,10 @@ public class CardPresenter extends Presenter {
     private static int sDefaultBackgroundColor;
     private Drawable mDefaultCardImage;
     private OnLongClickListener longClickListener;
+
+    @Inject
+    public CardPresenter() {
+    }
 
     private static void updateCardBackgroundColor(final ImageCardView view, final boolean selected) {
         final int color = selected ? sSelectedBackgroundColor : sDefaultBackgroundColor;
@@ -79,7 +84,7 @@ public class CardPresenter extends Presenter {
             cardView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(final View v) {
-                    return longClickListener.onLongClick((Movie)v.getTag());
+                    return longClickListener.onLongClick((Item)v.getTag());
                 }
             });
         }
@@ -88,12 +93,12 @@ public class CardPresenter extends Presenter {
 
     @Override
     public void onBindViewHolder(final Presenter.ViewHolder viewHolder, final Object item) {
-        final Movie movie = (Movie) item;
+        final Item movie = (Item) item;
         final ImageCardView cardView = (ImageCardView) viewHolder.view;
 
         //Log.d(TAG, "onBindViewHolder");
         cardView.setTitleText(movie.getTitle());
-        cardView.setContentText(movie.getExtension());
+        cardView.setContentText(movie.getExtension().toString());
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
         cardView.setTag(movie);
         if (movie.getCardImageUrl() != null) {
@@ -106,8 +111,8 @@ public class CardPresenter extends Presenter {
 
         } else {
             // load default icon (SVG)
-            @DrawableRes final int icon = Extension.getIcon(movie.getExtension());
-            final boolean supported = Extension.isSupported(movie.getExtension());
+            @DrawableRes final int icon = movie.getExtension().getIcon();
+            final boolean supported = movie.getExtension().getSupported();
             cardView.getMainImageView().setImageResource(icon);
             @ColorRes final int tintColor = supported ? R.color.card_icon : R.color.card_icon_unsupported;
             final ColorStateList colorStateList = ContextCompat.getColorStateList(cardView.getContext(), tintColor);
@@ -132,6 +137,6 @@ public class CardPresenter extends Presenter {
     }
 
     public interface OnLongClickListener {
-        public boolean onLongClick(Movie m);
+        public boolean onLongClick(Item m);
     }
 }

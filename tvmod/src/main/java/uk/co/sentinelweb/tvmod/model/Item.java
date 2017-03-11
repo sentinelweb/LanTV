@@ -19,11 +19,13 @@ import android.util.Log;
 
 import java.io.Serializable;
 
+import uk.co.sentinelweb.tvmod.util.Extension;
+
 /*
  * Movie class represents video entity with title, description, image thumbs and video url.
  * TODO make autovalue
  */
-public class Movie implements Serializable {
+public class Item implements Serializable {
     static final long serialVersionUID = 727566175075960653L;
 
     private String title;
@@ -31,15 +33,15 @@ public class Movie implements Serializable {
     private String bgImageUrl;
     private String cardImageUrl;
     private String videoUrl;
-    private String extension;
+    private Extension extension;
     private String category;
     private long position;
     private long duration;
 
-    public Movie() {
+    public Item() {
     }
 
-    public Movie(final String title, final String description,  final String videoUrl, final String bgImageUrl, final String cardImageUrl, final String category,final long duration, final String extension,final long position) {
+    public Item(final String title, final String description, final String videoUrl, final String bgImageUrl, final String cardImageUrl, final String category, final long duration, final Extension extension, final long position) {
         this.bgImageUrl = bgImageUrl;
         this.cardImageUrl = cardImageUrl;
         this.category = category;
@@ -51,8 +53,8 @@ public class Movie implements Serializable {
         this.videoUrl = videoUrl;
     }
 
-    public Movie clone() {
-        final Movie clone = new Movie();
+    public Item clone() {
+        final Item clone = new Item();
         clone.bgImageUrl = this.bgImageUrl;
         clone.cardImageUrl = this.cardImageUrl;
         clone.category = this.category;
@@ -82,11 +84,11 @@ public class Movie implements Serializable {
         this.description = description;
     }
 
-    public String getExtension() {
+    public Extension getExtension() {
         return extension;
     }
 
-    public void setExtension(final String extension) {
+    public void setExtension(final Extension extension) {
         this.extension = extension;
     }
 
@@ -140,7 +142,7 @@ public class Movie implements Serializable {
 
     public Uri getBackgroundImageURI() {
         try {
-            Log.d("BACK MOVIE: ", bgImageUrl);
+            Log.d("BACK ITEM: ", bgImageUrl);
             return Uri.parse(getBackgroundImageUrl());
         } catch (final Exception e) {
             Log.d("URI exception: ", "problem with background URI"+bgImageUrl);
@@ -167,33 +169,33 @@ public class Movie implements Serializable {
             return false;
         }
 
-        final Movie movie = (Movie) o;
+        final Item item = (Item) o;
 
-        if (position != movie.position) {
+        if (position != item.position) {
             return false;
         }
-        if (duration != movie.duration) {
+        if (duration != item.duration) {
             return false;
         }
-        if (title != null ? !title.equals(movie.title) : movie.title != null) {
+        if (title != null ? !title.equals(item.title) : item.title != null) {
             return false;
         }
-        if (description != null ? !description.equals(movie.description) : movie.description != null) {
+        if (description != null ? !description.equals(item.description) : item.description != null) {
             return false;
         }
-        if (bgImageUrl != null ? !bgImageUrl.equals(movie.bgImageUrl) : movie.bgImageUrl != null) {
+        if (bgImageUrl != null ? !bgImageUrl.equals(item.bgImageUrl) : item.bgImageUrl != null) {
             return false;
         }
-        if (cardImageUrl != null ? !cardImageUrl.equals(movie.cardImageUrl) : movie.cardImageUrl != null) {
+        if (cardImageUrl != null ? !cardImageUrl.equals(item.cardImageUrl) : item.cardImageUrl != null) {
             return false;
         }
-        if (videoUrl != null ? !videoUrl.equals(movie.videoUrl) : movie.videoUrl != null) {
+        if (videoUrl != null ? !videoUrl.equals(item.videoUrl) : item.videoUrl != null) {
             return false;
         }
-        if (extension != null ? !extension.equals(movie.extension) : movie.extension != null) {
+        if (extension != null ? !extension.equals(item.extension) : item.extension != null) {
             return false;
         }
-        return category != null ? category.equals(movie.category) : movie.category == null;
+        return category != null ? category.equals(item.category) : item.category == null;
 
     }
 

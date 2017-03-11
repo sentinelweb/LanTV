@@ -42,15 +42,15 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
-import co.uk.sentinelweb.lantv.net.smb.SmbFileReadInteractor;
+import javax.inject.Inject;
+
 import co.uk.sentinelweb.lantv.net.smb.url.SmbLocation;
 import uk.co.sentinelweb.tvmod.R;
 import uk.co.sentinelweb.tvmod.browse.CardPresenter;
 import uk.co.sentinelweb.tvmod.exoplayer.ExoPlayerActivity;
 import uk.co.sentinelweb.tvmod.model.Category;
-import uk.co.sentinelweb.tvmod.model.Movie;
+import uk.co.sentinelweb.tvmod.model.Item;
 import uk.co.sentinelweb.tvmod.playback.PlaybackOverlayActivity;
-import uk.co.sentinelweb.tvmod.util.CacheFileController;
 import uk.co.sentinelweb.tvmod.util.Extension;
 import uk.co.sentinelweb.tvmod.util.FileUtils;
 import uk.co.sentinelweb.tvmod.util.MxPlayerController;
@@ -82,32 +82,26 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
     private Drawable mDefaultBackground;
     private DisplayMetrics mMetrics;
     //private Subscription _subscribe;
-    DetailsMvpContract.Presenter _presenter;
+    @Inject protected DetailsMvpContract.Presenter _presenter;
+
+    @Inject protected VlcController _vlcController;
+    @Inject protected  MxPlayerController _mxController;
+
     DetailsFragmentModel _model;
 
-    private final VlcController _vlcController;
-    private final MxPlayerController _mxController;
-
     public DetailsFragment() {
-        _vlcController = new VlcController();
-        _mxController = new MxPlayerController(new CacheFileController(new SmbFileReadInteractor()));
+
     }
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         Log.d(TAG, "onCreate DetailsFragment");
         super.onCreate(savedInstanceState);
-
+//        _webProxyManager = new WebProxyManager(getActivity().getApplication());
+//        _vlcController = new VlcController(getActivity(), _webProxyManager);
+//        _mxController = new MxPlayerController(getActivity(), _webProxyManager);
         prepareBackgroundManager();
 
-
-
-//        if (mSelectedMovie != null) {
-//            setupMovie();
-//        } else {
-//            final Intent intent = new Intent(getActivity(), MainActivity.class);
-//            startActivity(intent);
-//        }
         setupAdapter();
         setupDetailsOverviewRowPresenter();
         setOnItemViewClickedListener(new ItemViewClickedListener());
@@ -116,15 +110,15 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
     private void setupMovie() {
         setupDetailsOverviewRow();
         setupMovieListRowPresenter();
-        updateBackground(_model.getMovie().getBackgroundImageUrl());
+        updateBackground(_model.getItem().getBackgroundImageUrl());
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        final Movie movie = (Movie) getActivity().getIntent().getSerializableExtra(DetailsActivity.MOVIE);
+        final Item item = (Item) getActivity().getIntent().getSerializableExtra(DetailsActivity.MOVIE);
         final SmbLocation location = (SmbLocation) getActivity().getIntent().getSerializableExtra(DetailsActivity.LOCATION);
-        _presenter.setupData(location, movie);
+        _presenter.setupData(location, item);
         _presenter.subscribe();
     }
 
@@ -177,14 +171,14 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
     private void setupDetailsOverviewRow() {
         mAdapter.clear();
         //Log.d(TAG, "doInBackground: " + _model.getMovie().toString());
-        final DetailsOverviewRow row = new DetailsOverviewRow(_model.getMovie());
+        final DetailsOverviewRow row = new DetailsOverviewRow(_model.getItem());
         row.setImageDrawable(getResources().getDrawable(R.drawable.default_background));
         final int width = Utils.convertDpToPixel(getActivity()
                 .getApplicationContext(), DETAIL_THUMB_WIDTH);
         final int height = Utils.convertDpToPixel(getActivity()
                 .getApplicationContext(), DETAIL_THUMB_HEIGHT);
         Glide.with(getActivity())
-                .load(_model.getMovie().getCardImageUrl())
+                .load(_model.getItem().getCardImageUrl())
                 .centerCrop()
                 .error(R.drawable.default_background)
                 .into(new SimpleTarget<GlideDrawable>(width, height) {
@@ -198,19 +192,24 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
                     }
                 });
 //        final MimeMap.MimeData mimeData = MimeMap.get(_model.getMovie().getVideoUrl());
-        final boolean supported = Extension.isSupported(FileUtils.getExt(_model.getMovie().getVideoUrl()));
+        final boolean supported = Extension.isSupported(FileUtils.getExt(_model.getItem().getVideoUrl()));
         if (supported) {
             row.addAction(new Action(ACTION_SYSTEM, getResources().getString(
-                    R.string.play_system)/*, getResources().getString(R.string.watch_trailer_2)*/));
-            row.addAction(new Action(ACTION_EXO, getResources().getString(R.string.play_exo)/*,
-                getResources().getString(R.string.rent_2)*/));
+                    R.string.play_system)));
+            row.addAction(new Action(ACTION_EXO, getResources().getString(R.string.play_exo)));
         } else {
-            row.addAction(new Action(ACTION_VLC, getResources().getString(
-                    R.string.play_vlc)/*, getResources().getString(R.string.watch_trailer_2)*/));
-            row.addAction(new Action(ACTION_MX, getResources().getString(R.string.play_mx)/*,
-                getResources().getString(R.string.rent_2)*/));
-            row.addAction(new Action(ACTION_DOWNLOAD, getResources().getString(R.string.download)/*,
-                getResources().getString(R.string.buy_2)*/));
+            if (_vlcController.checkInstalled()) {
+                row.addAction(new Action(ACTION_VLC, getResources().getString(
+                    R.string.play_vlc)));
+            } else {
+                // show install action
+            }
+            if (_mxController.checkInstalled()) {
+                row.addAction(new Action(ACTION_MX, getResources().getString(R.string.play_mx)));
+            } else {
+                // show install action
+            }
+            //row.addAction(new Action(ACTION_DOWNLOAD, getResources().getString(R.string.download)));
         }
         mAdapter.add(row);
     }
@@ -248,34 +247,32 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
     @Override
     public void launchSystemPlayer() {
         final Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-        intent.putExtra(DetailsActivity.MOVIE, _model.getMovie());
+        intent.putExtra(DetailsActivity.MOVIE, _model.getItem());
         startActivity(intent);
     }
 
     @Override
     public void launchExoplayer() {
         final Intent intent = new Intent(getActivity(), ExoPlayerActivity.class);
-        intent.putExtra(DetailsActivity.MOVIE, _model.getMovie());
+        intent.putExtra(DetailsActivity.MOVIE, _model.getItem());
         getActivity().startActivity(intent, null);
     }
 
     @Override
     public void launchVlc() {
-        //_selectedMovie = movie;
-        _vlcController.launchVlc(getActivity(), _model.getMovie());
+        _vlcController.launchVlcProxy(_model.getItem());
     }
 
     @Override
     public void launchMxPlayer() {
-        //_selectedMovie = movie;
-        _mxController.launchMxPlayer(getActivity(), _model.getMovie());
+        _mxController.launchMxPlayer(_model.getItem());
     }
 
 
     private void processList(final Category category) {
         final ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new CardPresenter());
-        for (int j = 0; j < category.movies().size(); j++) {
-            listRowAdapter.add(category.movies().get(j));
+        for (int j = 0; j < category.items().size(); j++) {
+            listRowAdapter.add(category.items().get(j));
         }
 
         final HeaderItem header = new HeaderItem(0, category.name());
@@ -291,8 +288,8 @@ public class DetailsFragment extends android.support.v17.leanback.app.DetailsFra
         public void onItemClicked(final Presenter.ViewHolder itemViewHolder, final Object item,
                                   final RowPresenter.ViewHolder rowViewHolder, final Row row) {
 
-            if (item instanceof Movie) {
-                final Movie movie = (Movie) item;
+            if (item instanceof Item) {
+                final Item movie = (Item) item;
                 Log.d(TAG, "Item: " + item.toString());
                 final Intent intent = new Intent(getActivity(), DetailsActivity.class);
                 intent.putExtra(DetailsActivity.MOVIE, movie);
