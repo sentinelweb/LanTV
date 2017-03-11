@@ -17,6 +17,8 @@ import uk.co.sentinelweb.tvmod.model.Item;
 public class VlcController {
     private static final String VLC_PKG_NAME = "org.videolan.vlc";
     private static final String VLC_VIDEO_ACTIVITY = "org.videolan.vlc.gui.video.VideoPlayerActivity";
+    private static final String VLC_INTENT_ACTION_RESULT = "org.videolan.vlc.player.result";
+
 
     public static final int REQUEST_CODE = 42;
     private static final String EXTRA_POSITION_OUT = "extra_position";
@@ -71,7 +73,7 @@ public class VlcController {
     }
 
     public void launchIntent(final Item item, final Uri uri) {
-        final Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
+        final Intent vlcIntent = new Intent(VLC_INTENT_ACTION_RESULT);
         vlcIntent.setComponent(new ComponentName(VLC_PKG_NAME, VLC_VIDEO_ACTIVITY));
         //vlcIntent.setPackage(VLC_PKG_NAME);
         vlcIntent.setDataAndTypeAndNormalize(uri, VIDEO_MIMETYPE);
@@ -95,8 +97,9 @@ public class VlcController {
                 if (dur > -1) {
                     m.setDuration(dur);
                 }
+                Log.d(VlcController.class.getSimpleName(), "VLC: Got results code: pos:" + pos+" dur:"+dur);
             } else {
-                Log.d(VlcController.class.getSimpleName(), "Got result code:" + resultCode);
+                Log.d(VlcController.class.getSimpleName(), "VLC: Got result code:" + resultCode);
             }
 
         }
