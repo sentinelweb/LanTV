@@ -57,6 +57,8 @@ public class CardPresenter extends Presenter {
         // during animations.
         view.setBackgroundColor(color);
         view.findViewById(R.id.info_field).setBackgroundColor(color);
+        // todo marquee title text
+        //view.findViewById(R.id.title_text).
     }
 
     @Override
